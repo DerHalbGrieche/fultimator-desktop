@@ -14,7 +14,7 @@ Fultimator is a desktop application designed to enhance and streamline the manag
 ## Info and License
 
 Fultimator Desktop is based on an offline-only Electron version of the Fultimator WebApp:
-- **Fultimator Web Application**: [Website](https://fabula-ultima-helper.web.app/) | [GitHub Repository](https://github.com/fultimator/fultimator)
+- **Fultimator Web Application**: [Website](https://fabula-ultima-helper.web.app/) | [Backup Site](https://fultimator-backup.web.app/) | [GitHub Repository](https://github.com/fultimator/fultimator)
 
 Fultimator is an independent project by the [Fultimator Dev Team](https://github.com/fultimator), and is **not affiliated** with Need Games or Rooster Games. The game rules in the system compendium are published under the [Fabula Ultima Third Party Tabletop License 1.0](https://need.games/wp-content/uploads/2024/06/Fabula-Ultima-Third-Party-Tabletop-License-1.0.pdf).
 
