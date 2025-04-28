@@ -46,6 +46,7 @@ const CombatSim = () => {
   const isResizing = useRef(false); // NPC detail Resizing ref
   const startX = useRef(0);
   const startWidth = useRef(npcDetailWidth);
+  const useDragAndDrop = localStorage.getItem("combatSimUseDragAndDrop") === "true";
 
   // Encounter states
   const [encounter, setEncounter] = useState(null); // State for the current encounter
@@ -70,7 +71,10 @@ const CombatSim = () => {
   // Study and Download image states
   const [selectedStudy, setSelectedStudy] = useState(0); // Study dropdown value
   const ref = useRef(); // Reference for the NPC sheet image download
-  const [downloadImage, downloadSnackbar] = useDownloadImage(selectedNPC?.name, ref); // Download image hook
+  const [downloadImage, downloadSnackbar] = useDownloadImage(
+    selectedNPC?.name,
+    ref
+  ); // Download image hook
 
   // Logs states
   const [logs, setLogs] = useState([]);
@@ -409,6 +413,10 @@ const CombatSim = () => {
       updatedNPCs.splice(index + 1, 0, movedNpc);
       setSelectedNPCs(updatedNPCs);
     }
+  };
+
+  const handleSortEnd = (sortedNPCs) => {
+    setSelectedNPCs(sortedNPCs);
   };
 
   // Handle NPC Click in the selected NPCs list
@@ -882,8 +890,8 @@ const CombatSim = () => {
           <SelectedNpcs
             selectedNPCs={selectedNPCs}
             handleResetTurns={handleResetTurns}
-            handleMoveUp={handleMoveUp}
-            handleMoveDown={handleMoveDown}
+            handleMoveUp={handleMoveUp} // Keep for backward compatibility if needed
+            handleMoveDown={handleMoveDown} // Keep for backward compatibility if needed
             handleRemoveNPC={handleRemoveNPC}
             handleUpdateNpcTurns={handleUpdateNpcTurns}
             handlePopoverOpen={handlePopoverOpen}
@@ -895,6 +903,8 @@ const CombatSim = () => {
             handleHpMpClick={(type, npc) => handleOpen(type, npc)}
             isMobile={isMobile}
             selectedNpcID={selectedNPC?.combatId}
+            useDragAndDrop={useDragAndDrop} // New prop
+  onSortEnd={handleSortEnd} // New prop
           />
           {/* Combat Log */}
           <CombatLog
