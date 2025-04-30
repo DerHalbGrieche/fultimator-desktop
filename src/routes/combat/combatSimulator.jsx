@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   getEncounterList,
@@ -12,6 +12,8 @@ import {
   Box,
   CircularProgress,
   useMediaQuery,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import BattleHeader from "../../components/combatSim/BattleHeader";
@@ -25,16 +27,19 @@ import { t } from "../../translation/translate";
 import DamageHealDialog from "../../components/combatSim/DamageHealDialog";
 import CombatLog from "../../components/combatSim/CombatLog";
 import { DragHandle } from "@mui/icons-material";
+import debounce from "lodash.debounce";
 
 export default function CombatSimulator() {
+  const [isDirty, setIsDirty] = useState(false);
+
   return (
-    <Layout fullWidth={true}>
-      <CombatSim />
+    <Layout fullWidth={true} unsavedChanges={isDirty}>
+      <CombatSim setIsDirty={setIsDirty} isDirty={isDirty} />
     </Layout>
   );
 }
 
-const CombatSim = () => {
+const CombatSim = ({ setIsDirty, isDirty }) => {
   // Base states
   const { id } = useParams(); // Get the encounter ID from the URL
   const theme = useTheme();
@@ -46,7 +51,17 @@ const CombatSim = () => {
   const isResizing = useRef(false); // NPC detail Resizing ref
   const startX = useRef(0);
   const startWidth = useRef(npcDetailWidth);
-  const useDragAndDrop = localStorage.getItem("combatSimUseDragAndDrop") === "true";
+  const useDragAndDrop =
+    localStorage.getItem("combatSimUseDragAndDrop") === "true";
+  const [initialized, setInitialized] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState(null);
+  const autosaveEnabled = localStorage.getItem("combatSimAutosave") === "true";
+  const AUTO_SAVE_DELAY = 30000; // 30 seconds between autosaves
+  const prevSelectedNpcsRef = useRef(null);
+  const prevRoundRef = useRef(null);
+  const prevLogsRef = useRef(null);
+  const prevEncounterNameRef = useRef(null);
+  const [isSaveSnackbarOpen, setIsSaveSnackbarOpen] = useState(false);
 
   // Encounter states
   const [encounter, setEncounter] = useState(null); // State for the current encounter
@@ -127,6 +142,188 @@ const CombatSim = () => {
     setLogs([]);
   };
 
+  // Debounced save function
+  const debouncedSave = useMemo(
+    () =>
+      debounce(() => {
+        if (autosaveEnabled) {
+          if (selectedNPCs.some((npc) => !npc.id)) {
+            console.warn("Skipping autosave due to invalid NPCs");
+            return;
+          }
+
+          const currentTime = new Date();
+          setLastAutoSaved(currentTime);
+
+          updateEncounter({
+            ...encounter,
+            name: encounterName,
+            selectedNPCs: selectedNPCs.map((npc) => ({
+              id: npc.id,
+              combatId: npc.combatId,
+              combatStats: npc.combatStats,
+            })),
+            round: encounter.round,
+            logs: logs,
+          });
+
+          console.log("Autosaved encounter state");
+          setIsSaveSnackbarOpen(true);
+          setIsDirty(false);
+        }
+      }, AUTO_SAVE_DELAY),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    [autosaveEnabled, selectedNPCs, encounter, encounterName, logs, id]
+  );
+
+  // useEffect to detect actual encounter changes
+  useEffect(() => {
+    if (!initialized) return;
+    // Skip first render
+    if (prevSelectedNpcsRef.current === null) {
+      prevSelectedNpcsRef.current = selectedNPCs;
+      prevRoundRef.current = encounter?.round;
+      prevLogsRef.current = logs;
+      prevEncounterNameRef.current = encounterName;
+      return;
+    }
+
+    // Only trigger dirty if something actually changed
+    let hasChanges = false;
+
+    // Check if round changed
+    if (prevRoundRef.current !== encounter?.round) {
+      console.log(
+        "Round changed from",
+        prevRoundRef.current,
+        "to",
+        encounter?.round
+      );
+      hasChanges = true;
+    }
+
+    // Check if name changed
+    if (prevEncounterNameRef.current !== encounterName) {
+      console.log(
+        "Name changed from",
+        prevEncounterNameRef.current,
+        "to",
+        encounterName
+      );
+      hasChanges = true;
+    }
+
+    // Check if logs changed
+    if (prevLogsRef.current?.length !== logs?.length) {
+      console.log("Logs length changed");
+      hasChanges = true;
+    }
+
+    // Complex deep comparison for NPCs
+    if (selectedNPCs.length !== prevSelectedNpcsRef.current?.length) {
+      console.log("NPC count changed");
+      hasChanges = true;
+    } else {
+      // Check if any NPC stats changed
+      for (let i = 0; i < selectedNPCs.length; i++) {
+        const currentNpc = selectedNPCs[i];
+        const prevNpc = prevSelectedNpcsRef.current[i];
+
+        if (currentNpc.combatId !== prevNpc.combatId) {
+          console.log("NPC changed at index", i);
+          hasChanges = true;
+          break;
+        }
+
+        // Check HP/MP changes
+        if (
+          currentNpc.combatStats.currentHp !== prevNpc.combatStats.currentHp ||
+          currentNpc.combatStats.currentMp !== prevNpc.combatStats.currentMp
+        ) {
+          console.log("HP/MP changed for NPC", currentNpc.name);
+          hasChanges = true;
+          break;
+        }
+
+        // Check status effects changes
+        const currentEffects = currentNpc.combatStats.statusEffects || [];
+        const prevEffects = prevNpc.combatStats.statusEffects || [];
+        if (JSON.stringify(currentEffects) !== JSON.stringify(prevEffects)) {
+          console.log("Status effects changed for NPC", currentNpc.name);
+          hasChanges = true;
+          break;
+        }
+
+        // Check turns changes
+        const currentTurns = currentNpc.combatStats.turns || [];
+        const prevTurns = prevNpc.combatStats.turns || [];
+        if (JSON.stringify(currentTurns) !== JSON.stringify(prevTurns)) {
+          console.log("Turns changed for NPC", currentNpc.name);
+          hasChanges = true;
+          break;
+        }
+      }
+    }
+
+    // Only set dirty flag if actual changes were detected
+    if (hasChanges && encounter && !selectedNPCs.some((npc) => !npc.id)) {
+      console.log("Detected meaningful changes, marking as dirty");
+      setIsDirty(true);
+    }
+
+    // Update all refs for next comparison
+    prevSelectedNpcsRef.current = JSON.parse(JSON.stringify(selectedNPCs));
+    prevRoundRef.current = encounter?.round;
+    prevLogsRef.current = [...logs];
+    prevEncounterNameRef.current = encounterName;
+  }, [selectedNPCs, encounter, logs, encounterName, initialized, setIsDirty]);
+
+  // Window event listener for beforeunload to prevent leaving the page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty && !autosaveEnabled) {
+        e.preventDefault();
+        // Some browsers require setting returnValue to show the dialog
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty, autosaveEnabled]);
+
+  // useEffect for triggering the autosave when dirty
+  useEffect(() => {
+    if (isDirty && autosaveEnabled) {
+      console.log("isDirty is true, triggering debounced save");
+      debouncedSave();
+    }
+
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [isDirty, autosaveEnabled, debouncedSave]);
+
+  // Window event listener for beforeunload to save when leaving
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isDirty && autosaveEnabled) {
+        handleSaveState();
+        console.log("Saved before unload");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDirty, autosaveEnabled]);
+
   // Fetch encounter and NPCs on initial load
   useEffect(() => {
     const fetchEncounter = async () => {
@@ -135,6 +332,12 @@ const CombatSim = () => {
       setEncounter(foundEncounter);
       setEncounterName(foundEncounter?.name || ""); // Set initial name
       setLogs(foundEncounter?.logs || []);
+      prevSelectedNpcsRef.current = JSON.parse(
+        JSON.stringify(foundEncounter?.selectedNPCs || [])
+      );
+      prevEncounterNameRef.current = foundEncounter?.name || "";
+      prevLogsRef.current = [...(foundEncounter?.logs || [])];
+      prevRoundRef.current = foundEncounter?.round;
       setLoading(false);
 
       // Load NPCs using only IDs and combatIds
@@ -149,6 +352,7 @@ const CombatSim = () => {
         }) || []
       );
       setSelectedNPCs(loadedNPCs); // Set full NPC data
+      setInitialized(true);
     };
 
     const fetchNpcs = async () => {
@@ -157,7 +361,7 @@ const CombatSim = () => {
     };
 
     fetchEncounter();
-    fetchNpcs();
+    fetchNpcs();    
   }, [id]);
 
   // Save encounter state
@@ -178,8 +382,7 @@ const CombatSim = () => {
       logs: logs,
     });
 
-    // Add log entry
-    addLog("combat_sim_log_encounter_saved");
+    setIsSaveSnackbarOpen(true);
 
     // Log full state for debugging (showing only IDs and combatIds)
     console.log("Saved Encounter State", {
@@ -847,6 +1050,10 @@ const CombatSim = () => {
         handleIncreaseRound={handleIncreaseRound}
         handleDecreaseRound={handleDecreaseRound}
         isMobile={isMobile}
+        isAutoSaveEnabled={autosaveEnabled}
+        lastManualSaved={lastSaved}
+        lastAutoSaved={lastAutoSaved}
+        isDirty={isDirty}
       />
       {isMobile && (
         <NpcSelector // NPC Selector
@@ -903,8 +1110,8 @@ const CombatSim = () => {
             handleHpMpClick={(type, npc) => handleOpen(type, npc)}
             isMobile={isMobile}
             selectedNpcID={selectedNPC?.combatId}
-            useDragAndDrop={useDragAndDrop} // New prop
-  onSortEnd={handleSortEnd} // New prop
+            useDragAndDrop={useDragAndDrop}
+            onSortEnd={handleSortEnd}
           />
           {/* Combat Log */}
           <CombatLog
@@ -988,6 +1195,21 @@ const CombatSim = () => {
         setIsGuarding={setIsGuarding}
         inputRef={inputRef}
       />
+      {/* Save Snackbar to inform user that it has been saved */}
+      <Snackbar
+        open={isSaveSnackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setIsSaveSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Alert
+          onClose={() => setIsSaveSnackbarOpen(false)}
+          severity={"success"}
+          sx={{ width: "100%" }}
+        >
+          {t("combat_sim_log_encounter_saved")}
+        </Alert>
+      </Snackbar>
       {downloadSnackbar}
     </Box>
   );

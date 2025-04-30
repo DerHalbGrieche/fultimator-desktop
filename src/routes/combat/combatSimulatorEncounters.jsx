@@ -48,14 +48,27 @@ const CombatSimEncounters = () => {
 
   // Combine settings into a single state object
   const [settings, setSettings] = useState({
-    autoUseMP: localStorage.getItem("combatSimAutoUseMP") === null ? true : localStorage.getItem("combatSimAutoUseMP") === "true",
-    autoOpenLogs: localStorage.getItem("combatSimAutoOpenLogs") === null ? true : localStorage.getItem("combatSimAutoOpenLogs") === "true",
-    useDragAndDrop: localStorage.getItem("combatSimUseDragAndDrop") === null ? true : localStorage.getItem("combatSimUseDragAndDrop") === "true",
+    autoUseMP:
+      localStorage.getItem("combatSimAutoUseMP") === null
+        ? true
+        : localStorage.getItem("combatSimAutoUseMP") === "true",
+    autoOpenLogs:
+      localStorage.getItem("combatSimAutoOpenLogs") === null
+        ? true
+        : localStorage.getItem("combatSimAutoOpenLogs") === "true",
+    useDragAndDrop:
+      localStorage.getItem("combatSimUseDragAndDrop") === null
+        ? true
+        : localStorage.getItem("combatSimUseDragAndDrop") === "true",
+    autosaveEnabled:
+      localStorage.getItem("combatSimAutosave") === null
+        ? true
+        : localStorage.getItem("combatSimAutosave") === "true",
   });
 
   // Handler to update individual settings
   const handleSettingChange = (name, value) => {
-    setSettings(prevSettings => ({
+    setSettings((prevSettings) => ({
       ...prevSettings,
       [name]: value,
     }));
@@ -67,6 +80,7 @@ const CombatSimEncounters = () => {
       combatSimAutoUseMP: "true",
       combatSimAutoOpenLogs: "true",
       combatSimUseDragAndDrop: "true",
+      combatSimAutosave: "false", // Disable autosave by default to prevent accidental saves
     };
 
     Object.entries(defaultSettings).forEach(([key, defaultValue]) => {
@@ -79,7 +93,9 @@ const CombatSimEncounters = () => {
     setSettings({
       autoUseMP: localStorage.getItem("combatSimAutoUseMP") === "true",
       autoOpenLogs: localStorage.getItem("combatSimAutoOpenLogs") === "true",
-      useDragAndDrop: localStorage.getItem("combatSimUseDragAndDrop") === "true",
+      useDragAndDrop:
+        localStorage.getItem("combatSimUseDragAndDrop") === "true",
+      autosaveEnabled: localStorage.getItem("combatSimAutosave") === "true",
     });
   }, []);
 
@@ -92,6 +108,7 @@ const CombatSimEncounters = () => {
     localStorage.setItem("combatSimAutoUseMP", settings.autoUseMP);
     localStorage.setItem("combatSimAutoOpenLogs", settings.autoOpenLogs);
     localStorage.setItem("combatSimUseDragAndDrop", settings.useDragAndDrop);
+    localStorage.setItem("combatSimAutosave", settings.autosaveEnabled);
     setSettingsOpen(false);
   };
 
@@ -101,7 +118,9 @@ const CombatSimEncounters = () => {
     setSettings({
       autoUseMP: localStorage.getItem("combatSimAutoUseMP") === "true",
       autoOpenLogs: localStorage.getItem("combatSimAutoOpenLogs") === "true",
-      useDragAndDrop: localStorage.getItem("combatSimUseDragAndDrop") === "true",
+      useDragAndDrop:
+        localStorage.getItem("combatSimUseDragAndDrop") === "true",
+      autosaveEnabled: localStorage.getItem("combatSimAutosave") === "true",
     });
   };
 
