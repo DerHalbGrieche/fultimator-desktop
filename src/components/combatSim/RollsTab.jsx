@@ -20,63 +20,69 @@ import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
 import { t } from "../../translation/translate";
 
 const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
+  const generateButtonLabel = (attack) => {
+    const attributeMap = {
+      dexterity: "DEX",
+      insight: "INS",
+      might: "MIG",
+      will: "WLP",
+    };
 
-    const generateButtonLabel = (attack) => {
-        const attributeMap = {
-          dexterity: "DEX",
-          insight: "INS",
-          might: "MIG",
-          will: "WLP",
-        };
-    
-        // Determine the source and correct attribute keys
-        let source, attrKey1, attrKey2;
-    
-        if (attack.weapon) {
-          source = attack.weapon;
-          attrKey1 = "att1";
-          attrKey2 = "att2";
-        } else if (attack.spell) {
-          source = attack.spell;
-          attrKey1 = "attr1";
-          attrKey2 = "attr2";
-        } else {
-          source = attack;
-          attrKey1 = "attr1";
-          attrKey2 = "attr2";
-        }
-    
-        // Extract attributes
-        const attr1 = source?.[attrKey1];
-        const attr2 = source?.[attrKey2];
-    
-        if (!attr1 || !attr2) return "Invalid Attack"; // Handle missing attributes
-    
-        const translatedAttribute1 = `${t(attributeMap[attr1])} d${
-          selectedNPC.attributes[attr1]
-        }`;
-        const translatedAttribute2 = `${t(attributeMap[attr2])} d${
-          selectedNPC.attributes[attr2]
-        }`;
-    
-        return `【${translatedAttribute1} + ${translatedAttribute2}】`;
-      };
-    
-      const damageTypeLabels = {
-        physical: "physical_damage",
-        wind: "air_damage",
-        bolt: "bolt_damage",
-        dark: "dark_damage",
-        earth: "earth_damage",
-        fire: "fire_damage",
-        ice: "ice_damage",
-        light: "light_damage",
-        poison: "poison_damage",
-      };
+    // Determine the source and correct attribute keys
+    let source, attrKey1, attrKey2;
 
-const StyledMarkdown = ({ children, ...props }) => {
+    if (attack.weapon) {
+      source = attack.weapon;
+      attrKey1 = "att1";
+      attrKey2 = "att2";
+    } else if (attack.spell) {
+      source = attack.spell;
+      attrKey1 = "attr1";
+      attrKey2 = "attr2";
+    } else {
+      source = attack;
+      attrKey1 = "attr1";
+      attrKey2 = "attr2";
+    }
+
+    // Extract attributes
+    const attr1 = source?.[attrKey1];
+    const attr2 = source?.[attrKey2];
+
+    if (!attr1 || !attr2) return "Invalid Attack"; // Handle missing attributes
+
+    const translatedAttribute1 = `${t(attributeMap[attr1])} d${
+      selectedNPC.attributes[attr1]
+    }`;
+    const translatedAttribute2 = `${t(attributeMap[attr2])} d${
+      selectedNPC.attributes[attr2]
+    }`;
+
+    return `【${translatedAttribute1} + ${translatedAttribute2}】`;
+  };
+
+  const damageTypeLabels = {
+    physical: "physical_damage",
+    wind: "air_damage",
+    bolt: "bolt_damage",
+    dark: "dark_damage",
+    earth: "earth_damage",
+    fire: "fire_damage",
+    ice: "ice_damage",
+    light: "light_damage",
+    poison: "poison_damage",
+  };
+
+  const StyledMarkdown = ({ children, ...props }) => {
     return (
-      <div style={{ whiteSpace: "pre-line", display: "inline", margin: 0, padding: 1 }}>
+      <div
+        style={{
+          whiteSpace: "pre-line",
+          display: "inline",
+          margin: 0,
+          padding: 1,
+        }}
+      >
         <ReactMarkdown
           {...props}
           components={{
@@ -94,7 +100,17 @@ const StyledMarkdown = ({ children, ...props }) => {
       </div>
     );
   };
-    
+
+  const handleSpellWithNoTarget = (npcData) => {
+    // Set the spell target to 1
+    const updatedData = {
+      ...npcData,
+      maxTargets: 1,
+    };
+    setClickedData(updatedData);
+    setOpen(true);
+  };
+
   return (
     <List sx={{ width: "100%", bgcolor: "background.paper" }}>
       {[
@@ -108,7 +124,12 @@ const StyledMarkdown = ({ children, ...props }) => {
           type: "Weapon Attack",
           data: wattack,
           extra: wattack.special?.length ? wattack.special.join("\n\n") : null,
-          icon: wattack.weapon.range === "distance" ? <DistanceIcon /> : <MeleeIcon />,
+          icon:
+            wattack.weapon.range === "distance" ? (
+              <DistanceIcon />
+            ) : (
+              <MeleeIcon />
+            ),
         })),
         ...(selectedNPC?.spells || []).map((spell) => ({
           type: "Spell",
@@ -117,26 +138,54 @@ const StyledMarkdown = ({ children, ...props }) => {
           icon: <SpellIcon />,
         })),
       ].map(({ type, data, extra, icon }, index) => (
-        <ListItem key={index} sx={{ display: "flex", alignItems: "stretch", borderBottom: "1px solid #ddd", py: 1, minHeight: 80 }}>
-          <Box sx={{ display: "flex", alignItems: "center", minWidth: 25 }}>{icon}</Box>
+        <ListItem
+          key={index}
+          sx={{
+            display: "flex",
+            alignItems: "stretch",
+            borderBottom: "1px solid #ddd",
+            py: 1,
+            minHeight: 80,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", minWidth: 25 }}>
+            {icon}
+          </Box>
           <Divider orientation="vertical" flexItem sx={{ mx: 1, my: -1 }} />
           <Box sx={{ flexGrow: 1, px: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold">
-              {data.name} {type === "Spell" && data.type === "offensive" && <OffensiveSpellIcon />}
+              {data.name}{" "}
+              {type === "Spell" && data.type === "offensive" && (
+                <OffensiveSpellIcon />
+              )}
             </Typography>
-            <Typography variant="body2" sx={{ ml: type === "Spell" && data.type !== "offensive" ? 0 : -1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                ml: type === "Spell" && data.type !== "offensive" ? 0 : -1,
+              }}
+            >
               {(type === "Attack" || type === "Weapon Attack") && (
                 <>
                   <strong>{generateButtonLabel(data)}</strong>
-                  {calcPrecision(data, selectedNPC) > 0 && `+${calcPrecision(data, selectedNPC)} `}
+                  {calcPrecision(data, selectedNPC) > 0 &&
+                    `+${calcPrecision(data, selectedNPC)} `}
                   {data.type !== "nodmg" && (
                     <>
                       <strong>
-                        <Diamond />【{t("HR") + " + " + calcDamage(data, selectedNPC)}】
+                        <Diamond />【
+                        {t("HR") + " + " + calcDamage(data, selectedNPC)}】
                       </strong>
                       <span style={{ textTransform: "lowercase" }}>
-                        <StyledMarkdown allowedElements={["strong"]} unwrapDisallowed={true}>
-                          {t(damageTypeLabels[type === "Attack" ? data.type : data.weapon.type])}
+                        <StyledMarkdown
+                          allowedElements={["strong"]}
+                          unwrapDisallowed={true}
+                        >
+                          {t(
+                            damageTypeLabels[
+                              type === "Attack" ? data.type : data.weapon.type
+                            ]
+                          )}
                         </StyledMarkdown>
                       </span>
                     </>
@@ -148,22 +197,38 @@ const StyledMarkdown = ({ children, ...props }) => {
                   {data.type === "offensive" && (
                     <>
                       <strong>{generateButtonLabel(data)}</strong>
-                      {calcMagic(selectedNPC) > 0 && `+${calcMagic(selectedNPC)} `}
+                      {calcMagic(selectedNPC) > 0 &&
+                        `+${calcMagic(selectedNPC)} `}
                       <Diamond />
                     </>
-                  )} {data.mp} MP <Diamond /> {data.target} <Diamond /> {data.duration}
+                  )}{" "}
+                  {data.mp} MP <Diamond /> {data.target} <Diamond />{" "}
+                  {data.duration}
                 </>
               )}
             </Typography>
             {extra && (
               <Box sx={{ maxWidth: "80%", overflowWrap: "break-word" }}>
-                <Typography variant="body2" color="text.secondary" component="div" sx={{ whiteSpace: "pre-wrap", my: -1 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  component="div"
+                  sx={{ whiteSpace: "pre-wrap", my: -1 }}
+                >
                   <StyledMarkdown>{extra}</StyledMarkdown>
                 </Typography>
               </Box>
             )}
           </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "stretch", my: -1, mx: -2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "stretch",
+              my: -1,
+              mx: -2,
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -171,14 +236,29 @@ const StyledMarkdown = ({ children, ...props }) => {
                 if (type === "Spell" && data.maxTargets >= 0) {
                   setClickedData(data);
                   setOpen(true);
+                } else if (type === "Spell" && !data.maxTargets) {
+                  handleSpellWithNoTarget(data);
                 } else {
                   handleAttack(
                     data,
-                    type === "Attack" ? "attack" : type === "Weapon Attack" ? "weapon" : "spell"
+                    type === "Attack"
+                      ? "attack"
+                      : type === "Weapon Attack"
+                      ? "weapon"
+                      : "spell"
                   );
                 }
               }}
-              sx={{ color: "#fff", minWidth: 40, width: 40, height: "100%", display: "flex", justifyContent: "center", alignItems: "center", borderRadius: 0 }}
+              sx={{
+                color: "#fff",
+                minWidth: 40,
+                width: 40,
+                height: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                borderRadius: 0,
+              }}
             >
               <CasinoIcon />
             </Button>
