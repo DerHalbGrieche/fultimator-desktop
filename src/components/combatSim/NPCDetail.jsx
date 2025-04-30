@@ -207,6 +207,7 @@ const NPCDetail = ({
       hr,
       extraDamage: calcDamage(attack, selectedNPC),
       damage,
+      attackType,
       effect:
         attackType === "attack"
           ? showBaseAttackEffect && attack.special[0]
