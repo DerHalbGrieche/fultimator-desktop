@@ -70,6 +70,12 @@ const NPCDetail = ({
 
   const autoUseMP = localStorage.getItem("combatSimAutoUseMP") === "true";
   const autoOpenLogs = localStorage.getItem("combatSimAutoOpenLogs") === "true";
+  const showBaseAttackEffect =
+    localStorage.getItem("combatSimShowBaseAttackEffect") === "true";
+  const showWeaponAttackEffect =
+    localStorage.getItem("combatSimShowWeaponAttackEffect") === "true";
+  const showSpellEffect =
+    localStorage.getItem("combatSimShowSpellEffect") === "true";
 
   if (!selectedNPC) return null;
 
@@ -110,7 +116,11 @@ const NPCDetail = ({
       } = rollAttack(clickedData, "spell");
       // log the spell
       addLog("combat_sim_log_spell_offensive_roll", "--isSpell--", {
-        npcName: selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""),
+        npcName:
+          selectedNPC.name +
+          (selectedNPC?.combatStats?.combatNotes
+            ? "【" + selectedNPC.combatStats.combatNotes + "】"
+            : ""),
         spellName: clickedData.name,
         targets: numTargets,
         dice1: diceResults.attribute1,
@@ -119,25 +129,42 @@ const NPCDetail = ({
           calcMagic(selectedNPC) !== 0 ? " + " + calcMagic(selectedNPC) : "",
         totalHitScore: totalHitScore,
         hr: damage,
+        effect: showSpellEffect && clickedData.effect ? clickedData.effect : "",
       });
 
       if (isCriticalFailure) {
         setTimeout(() => {
-          addLog("combat_sim_log_crit_failure", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+          addLog(
+            "combat_sim_log_crit_failure",
+            selectedNPC.name +
+              (selectedNPC?.combatStats?.combatNotes
+                ? "【" + selectedNPC.combatStats.combatNotes + "】"
+                : "")
+          );
         }, 100);
       }
 
       if (isCriticalSuccess) {
         setTimeout(() => {
-          addLog("combat_sim_log_crit_success", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+          addLog(
+            "combat_sim_log_crit_success",
+            selectedNPC.name +
+              (selectedNPC?.combatStats?.combatNotes
+                ? "【" + selectedNPC.combatStats.combatNotes + "】"
+                : "")
+          );
         }, 100);
       }
     } else {
       addLog(
         "combat_sim_log_spell_use",
-        selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""),
+        selectedNPC.name +
+          (selectedNPC?.combatStats?.combatNotes
+            ? "【" + selectedNPC.combatStats.combatNotes + "】"
+            : ""),
         clickedData.name,
-        numTargets
+        numTargets,
+        {effect: showSpellEffect && clickedData.effect ? clickedData.effect : "", markdown: true}
       );
     }
     if (autoOpenLogs) {
@@ -162,7 +189,11 @@ const NPCDetail = ({
 
     // Add the attack to the log
     addLog("combat_sim_log_attack", "--isAttack--", {
-      npcName: selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""),
+      npcName:
+        selectedNPC.name +
+        (selectedNPC?.combatStats?.combatNotes
+          ? "【" + selectedNPC.combatStats.combatNotes + "】"
+          : ""),
       attackName: attack.name,
       range: attackType === "attack" ? attack.range : attack.weapon.range,
       damageType: attackType === "attack" ? attack.type : attack.weapon.type,
@@ -176,17 +207,37 @@ const NPCDetail = ({
       hr,
       extraDamage: calcDamage(attack, selectedNPC),
       damage,
+      effect:
+        attackType === "attack"
+          ? showBaseAttackEffect && attack.special[0]
+            ? attack.special[0]
+            : ""
+          : showWeaponAttackEffect && attack.special[0]
+          ? attack.special[0]
+          : "",
     });
 
     if (isCriticalFailure) {
       setTimeout(() => {
-        addLog("combat_sim_log_crit_failure", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+        addLog(
+          "combat_sim_log_crit_failure",
+          selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : "")
+        );
       }, 100);
     }
 
     if (isCriticalSuccess) {
       setTimeout(() => {
-        addLog("combat_sim_log_crit_success", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+        addLog(
+          "combat_sim_log_crit_success",
+          selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : "")
+        );
       }, 100);
     }
 
@@ -312,7 +363,11 @@ const NPCDetail = ({
 
     // log the roll
     addLog("combat_sim_log_standard_roll", "--isStandardRoll--", {
-      npcName: selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""),
+      npcName:
+        selectedNPC.name +
+        (selectedNPC?.combatStats?.combatNotes
+          ? "【" + selectedNPC.combatStats.combatNotes + "】"
+          : ""),
       dice1: roll1,
       dice2: roll2,
       dice1Label: attr1label,
@@ -322,13 +377,25 @@ const NPCDetail = ({
 
     if (isCriticalFailure) {
       setTimeout(() => {
-        addLog("combat_sim_log_crit_failure", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+        addLog(
+          "combat_sim_log_crit_failure",
+          selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : "")
+        );
       }, 100);
     }
 
     if (isCriticalSuccess) {
       setTimeout(() => {
-        addLog("combat_sim_log_crit_success", selectedNPC.name + (selectedNPC?.combatStats?.combatNotes ? "【" + selectedNPC.combatStats.combatNotes + "】" : ""));
+        addLog(
+          "combat_sim_log_crit_success",
+          selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : "")
+        );
       }, 100);
     }
 
@@ -424,7 +491,9 @@ const NPCDetail = ({
               textTransform: "uppercase",
             }}
           >
-            {selectedNPC.name}{selectedNPC?.combatStats?.combatNotes && ` 【${selectedNPC.combatStats.combatNotes}】`}
+            {selectedNPC.name}
+            {selectedNPC?.combatStats?.combatNotes &&
+              ` 【${selectedNPC.combatStats.combatNotes}】`}
           </Typography>
           <Tooltip
             title={t("Close")}
@@ -637,7 +706,9 @@ const NPCDetail = ({
           textTransform: "uppercase",
         }}
       >
-        {selectedNPC.name}{selectedNPC?.combatStats?.combatNotes && ` 【${selectedNPC.combatStats.combatNotes}】`}
+        {selectedNPC.name}
+        {selectedNPC?.combatStats?.combatNotes &&
+          ` 【${selectedNPC.combatStats.combatNotes}】`}
         <IconButton onClick={() => setSelectedNPC(null)}>
           <Close />
         </IconButton>

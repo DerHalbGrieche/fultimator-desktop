@@ -22,6 +22,7 @@ import { GiDeathSkull } from "react-icons/gi";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import { t } from "../../translation/translate";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import ReactMarkdown from "react-markdown";
 
 // Define the mapping of tags to components
 const tagMap = {
@@ -52,6 +53,35 @@ const tagMap = {
   "{{crit-failure}}": <b style={{ color: "red" }}>{t("Critical Failure")}</b>,
   "{{crit-success}}": <b style={{ color: "green" }}>{t("Critical Success")}</b>,
 };
+
+  const SpanMarkdown = ({ children, ...props }) => {
+    return (
+      <span
+        style={{
+          whiteSpace: "pre-line",
+          display: "inline",
+          margin: 0,
+          padding: 0,
+        }}
+      >
+        <ReactMarkdown
+          {...props}
+          components={{
+            p: ({ ...props }) => <span {...props} />, // Render <p> as <span>
+            strong: ({ ...props }) => (
+              <strong style={{ fontWeight: "bold" }} {...props} />
+            ),
+            em: ({ ...props }) => (
+              <em style={{ fontStyle: "italic" }} {...props} />
+            ),
+            span: ({ ...props }) => <span {...props} />,
+          }}
+        >
+          {children}
+        </ReactMarkdown>
+      </span>
+    );
+  };
 
 function replaceTagsWithComponents(
   text,
@@ -110,6 +140,9 @@ function replaceTagsWithComponents(
         if (part === "{{damage-type}}") {
           return <b>{t(value2.damageType)}</b>;
         }
+        if( part === "{{effect}}") {
+          return <SpanMarkdown>{value2.effect}</SpanMarkdown>;
+        }
 
         // Return the part as it is if no match
         return part;
@@ -144,6 +177,9 @@ function replaceTagsWithComponents(
         }
         if (part === "{{targets}}") {
           return <b>{value2.targets}</b>;
+        }
+        if( part === "{{effect}}") {
+          return <SpanMarkdown>{value2.effect}</SpanMarkdown>;
         }
 
         // Return the part as it is if no match
@@ -192,6 +228,11 @@ function replaceTagsWithComponents(
           return <b>{t(value3)}</b>; // Return translated value3 wrapped in <b> tags
         }
         if (part === "{{value4}}") {
+          // if value4 is object and markdown is true, render it as a markdown component
+          if (typeof value4 === "object" && value4.markdown) {
+            return <SpanMarkdown>{value4.effect}</SpanMarkdown>;
+          }
+
           return <b>{value4}</b>; // Return value4 wrapped in <b> tags
         }
         if (part === "{{value5}}") {

@@ -16,7 +16,7 @@ import {
   Switch,
   Paper,
   TextField,
-  InputAdornment
+  InputAdornment,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { t } from "../../translation/translate";
@@ -27,8 +27,11 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import HistoryIcon from "@mui/icons-material/History";
 import TimerIcon from "@mui/icons-material/Timer";
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import InfoIcon from '@mui/icons-material/Info';
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import { PiSwordFill } from "react-icons/pi";
+import { GoLog } from "react-icons/go";
+import { GiBurningDot } from "react-icons/gi";
+import { GiClawSlashes } from "react-icons/gi";
 
 const SettingsDialog = ({
   open,
@@ -38,10 +41,21 @@ const SettingsDialog = ({
   onSettingChange,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
 
-  const { autoUseMP, autoOpenLogs, useDragAndDrop, autosaveEnabled, autosaveInterval, showSaveSnackbar, hideLogs } = settings;
+  const {
+    autoUseMP,
+    autoOpenLogs,
+    useDragAndDrop,
+    autosaveEnabled,
+    autosaveInterval,
+    showSaveSnackbar,
+    hideLogs,
+    showBaseAttackEffect,
+    showWeaponAttackEffect,
+    showSpellEffect,
+  } = settings;
 
   const handleSwitchChange = (name) => (event) => {
     onSettingChange(name, event.target.checked);
@@ -49,28 +63,28 @@ const SettingsDialog = ({
 
   const handleIntervalChange = (event) => {
     const value = event.target.value;
-  
+
     // Allow empty input while typing
     if (value === "") {
       onSettingChange("autosaveInterval", "");
       return;
     }
-  
+
     // Otherwise parse to integer
     const parsedValue = parseInt(value, 10);
     if (!isNaN(parsedValue)) {
       onSettingChange("autosaveInterval", parsedValue);
     }
   };
-  
+
   const handleIntervalBlur = () => {
     let value = settings.autosaveInterval;
-  
+
     // If it's empty or invalid, default to 0
     if (value === "" || isNaN(value)) {
       value = 0;
     }
-  
+
     // Clamp to 0–300
     const clamped = Math.min(Math.max(value, 0), 300);
     onSettingChange("autosaveInterval", clamped);
@@ -81,62 +95,93 @@ const SettingsDialog = ({
       title: t("combat_sim_settings_automation"),
       items: [
         {
+          // Automatically use MP when NPC casts spells
           name: "autoUseMP",
           value: autoUseMP,
           label: t("combat_sim_auto_use_mp"),
           icon: <AutoFixHighIcon />,
-          type: "switch"
+          type: "switch",
         },
         {
+          // Automatically open logs when rolling for NPCs
           name: "autoOpenLogs",
           value: autoOpenLogs,
           label: t("combat_sim_auto_open_logs"),
           icon: <HistoryIcon />,
-          type: "switch"
+          type: "switch",
         },
         {
+          // Turn on automatic save if there are unsaved changes
           name: "autosaveEnabled",
           value: autosaveEnabled,
           label: t("combat_sim_autosave_setting_desktop"),
           icon: <SaveAsIcon />,
-          type: "switch"
+          type: "switch",
         },
         {
+          // Set the autosave interval
           name: "autosaveInterval",
           value: autosaveInterval,
           label: t("combat_sim_autosave_interval"),
           icon: <TimerIcon />,
           type: "number",
-          disabled: !autosaveEnabled
-        }
-      ]
+          disabled: !autosaveEnabled,
+        },
+      ],
     },
     {
       title: t("combat_sim_settings_interface"),
       items: [
         {
+          // Use drag and drop to move items in the list
           name: "useDragAndDrop",
           value: useDragAndDrop,
           label: t("combat_sim_use_drag_and_drop"),
           icon: <DragIndicatorIcon />,
-          type: "switch"
+          type: "switch",
         },
         {
+          // Show a snackbar when saving changes
           name: "showSaveSnackbar",
           value: showSaveSnackbar,
           label: t("combat_sim_show_save_snackbar"),
           icon: <NotificationsIcon />,
-          type: "switch"
+          type: "switch",
         },
         {
+          // Hide the combat logs
           name: "hideLogs",
           value: hideLogs,
           label: t("combat_sim_log_hide"),
-          icon: <InfoIcon />,
-          type: "switch"
-        }
-      ]
-    }
+          icon: <GoLog />,
+          type: "switch",
+        },
+        {
+          // Show the effect of base attacks in the log if the attack has it
+          name: "showBaseAttackEffect",
+          value: showBaseAttackEffect,
+          label: t("combat_sim_show_base_attack_effect"),
+          icon: <GiClawSlashes />,
+          type: "switch",
+        },
+        {
+          // Show the effect of weapon attacks in the log if the attack has it
+          name: "showWeaponAttackEffect",
+          value: showWeaponAttackEffect,
+          label: t("combat_sim_show_weapon_attack_effect"),
+          icon: <PiSwordFill />,
+          type: "switch",
+        },
+        {
+          // Show the effect of spells in the log if the spell has it
+          name: "showSpellEffect",
+          value: showSpellEffect,
+          label: t("combat_sim_show_spell_effect"),
+          icon: <GiBurningDot />,
+          type: "switch",
+        },
+      ],
+    },
   ];
 
   return (
@@ -146,13 +191,13 @@ const SettingsDialog = ({
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      sx={{ 
-        "& .MuiDialog-paper": { 
-          borderRadius: isMobile ? 0 : 3, 
+      sx={{
+        "& .MuiDialog-paper": {
+          borderRadius: isMobile ? 0 : 3,
           padding: 0,
           height: isMobile ? "100%" : "auto",
-          maxHeight: isMobile ? "100%" : "80vh"
-        } 
+          maxHeight: isMobile ? "100%" : "80vh",
+        },
       }}
     >
       <DialogTitle
@@ -163,11 +208,18 @@ const SettingsDialog = ({
           borderBottom: `1px solid ${theme.palette.divider}`,
           pb: 1,
           pt: 2,
-          px: 3
+          px: 3,
         }}
       >
         <Box display="flex" alignItems="center">
-          <SaveIcon sx={{ mr: 1.5, color: isDarkMode ? theme.palette.secondary.main : theme.palette.primary.main }} />
+          <SaveIcon
+            sx={{
+              mr: 1.5,
+              color: isDarkMode
+                ? theme.palette.secondary.main
+                : theme.palette.primary.main,
+            }}
+          />
           <Typography variant="h3" fontWeight="bold">
             {t("combat_sim_settings")}
           </Typography>
@@ -178,79 +230,101 @@ const SettingsDialog = ({
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ mt: 0, overflowY: "auto", maxHeight: isMobile ? "100%" : "60vh" }}>
+        <Box
+          sx={{
+            mt: 0,
+            overflowY: "auto",
+            maxHeight: isMobile ? "100%" : "60vh",
+          }}
+        >
           {settingsCategories.map((category, categoryIndex) => (
             <Paper
               key={categoryIndex}
               elevation={0}
-              sx={{ 
-                m: 2, 
-                mb: 3, 
+              sx={{
+                m: 2,
+                mb: 3,
                 borderRadius: 2,
                 border: `1px solid ${theme.palette.divider}`,
-                overflow: "hidden"
+                overflow: "hidden",
               }}
             >
               <Box
                 sx={{
-                  bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                  bgcolor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.03)",
                   px: 2,
                   py: 1.5,
-                  borderBottom: `1px solid ${theme.palette.divider}`
+                  borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
               >
                 <Typography variant="subtitle1" fontWeight="bold">
                   {category.title}
                 </Typography>
               </Box>
-              
+
               <List sx={{ py: 0 }}>
                 {category.items.map((item, itemIndex) => (
                   <ListItem
                     key={itemIndex}
                     sx={{
-                      borderBottom: itemIndex < category.items.length - 1 ? `1px solid ${theme.palette.divider}` : "none",
+                      borderBottom:
+                        itemIndex < category.items.length - 1
+                          ? `1px solid ${theme.palette.divider}`
+                          : "none",
                       py: 0.5,
-                      alignItems: "center"
+                      alignItems: "center",
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 40 }}>
                       {React.cloneElement(item.icon, {
-                        color: (item.type === "switch" && item.value) || 
-                               (item.type === "number" && !item.disabled) ? 
-                               (isDarkMode ? "secondary" : "primary") : "disabled",
-                        fontSize: "small"
+                        style: {
+                          color:
+                            (item.type === "switch" && item.value) ||
+                            (item.type === "number" && !item.disabled)
+                              ? isDarkMode
+                                ? theme.palette.secondary.main
+                                : theme.palette.primary.main
+                              : theme.palette.text.disabled,
+                          fontSize: 20, // Explicit size for all icons
+                          verticalAlign: "middle",
+                          ...item.icon.props.style, // Preserve existing styles
+                        },
+                        size: 20, // For react-icons
+                        fontSize: "small", // For MUI icons
                       })}
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={item.label}
-                      sx={{ my: 0 }}
-                    />
+                    <ListItemText primary={item.label} sx={{ my: 0 }} />
                     {item.type === "switch" && (
                       <Switch
                         checked={item.value}
                         onChange={handleSwitchChange(item.name)}
                         size="medium"
                         color="primary"
-                        inputProps={{ 'aria-label': item.label }}
+                        inputProps={{ "aria-label": item.label }}
                       />
                     )}
                     {item.type === "number" && (
                       <TextField
-                      type="number"
-                      value={item.value}
-                      onChange={handleIntervalChange}
-                      onBlur={handleIntervalBlur}
-                      disabled={item.disabled}
-                      size="small"
-                      sx={{ width: '100px' }}
-                      slotProps={{
-                        input: {
-                          endAdornment: <InputAdornment position="end">sec</InputAdornment>,
-                          inputProps: { step: 5 }
-                        }
-                      }}
-                    />                    
+                        type="number"
+                        value={item.value}
+                        onChange={handleIntervalChange}
+                        onBlur={handleIntervalBlur}
+                        disabled={item.disabled}
+                        size="small"
+                        sx={{ width: "100px" }}
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                sec
+                              </InputAdornment>
+                            ),
+                            inputProps: { step: 5 },
+                          },
+                        }}
+                      />
                     )}
                   </ListItem>
                 ))}
@@ -261,24 +335,24 @@ const SettingsDialog = ({
       </DialogContent>
 
       <DialogActions
-        sx={{ 
-          justifyContent: "flex-end", 
-          p: 2, 
+        sx={{
+          justifyContent: "flex-end",
+          p: 2,
           borderTop: `1px solid ${theme.palette.divider}`,
           position: isMobile ? "sticky" : "relative",
           bottom: 0,
-          bgcolor: theme.palette.background.paper
+          bgcolor: theme.palette.background.paper,
         }}
       >
         <Button
           onClick={onClose}
           color="inherit"
           variant="outlined"
-          sx={{ 
-            borderRadius: 2, 
-            textTransform: "none", 
+          sx={{
+            borderRadius: 2,
+            textTransform: "none",
             px: 3,
-            mr: 1
+            mr: 1,
           }}
         >
           {t("Cancel")}
@@ -288,10 +362,10 @@ const SettingsDialog = ({
           variant="contained"
           color="primary"
           startIcon={<SaveIcon />}
-          sx={{ 
-            borderRadius: 2, 
-            textTransform: "none", 
-            px: 3 
+          sx={{
+            borderRadius: 2,
+            textTransform: "none",
+            px: 3,
           }}
         >
           {t("Save Changes")}

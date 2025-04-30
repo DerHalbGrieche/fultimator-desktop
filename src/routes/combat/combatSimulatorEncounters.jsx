@@ -62,7 +62,19 @@ const SETTINGS_CONFIG = {
   hideLogs: {
     key: "combatSimHideLogs",
     defaultValue: false
-  }
+  },
+  showBaseAttackEffect: {
+    key: "combatSimShowBaseAttackEffect",
+    defaultValue: true
+  },
+  showWeaponAttackEffect: {
+    key: "combatSimShowWeaponAttackEffect",
+    defaultValue: true
+  },
+  showSpellEffect: {
+    key: "combatSimShowSpellEffect",
+    defaultValue: true
+  },
 };
 
 export default function CombatSimulatorEncounters() {
