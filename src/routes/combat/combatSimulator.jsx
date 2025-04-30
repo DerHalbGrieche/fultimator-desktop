@@ -56,12 +56,15 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const [initialized, setInitialized] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState(null);
   const autosaveEnabled = localStorage.getItem("combatSimAutosave") === "true";
-  const AUTO_SAVE_DELAY = 30000; // 30 seconds between autosaves
+  const AUTO_SAVE_DELAY =
+    1000 * localStorage.getItem("combatSimAutosaveInterval") || 30000; // default 30 seconds between autosaves
   const prevSelectedNpcsRef = useRef(null);
   const prevRoundRef = useRef(null);
   const prevLogsRef = useRef(null);
   const prevEncounterNameRef = useRef(null);
   const [isSaveSnackbarOpen, setIsSaveSnackbarOpen] = useState(false);
+  const showSaveSnackbar =
+    localStorage.getItem("combatSimShowSaveSnackbar") === "true";
 
   // Encounter states
   const [encounter, setEncounter] = useState(null); // State for the current encounter
@@ -172,7 +175,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           setIsDirty(false);
         }
       }, AUTO_SAVE_DELAY),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [autosaveEnabled, selectedNPCs, encounter, encounterName, logs, id]
   );
 
@@ -361,7 +364,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     };
 
     fetchEncounter();
-    fetchNpcs();    
+    fetchNpcs();
   }, [id]);
 
   // Save encounter state
@@ -383,6 +386,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     });
 
     setIsSaveSnackbarOpen(true);
+    setIsDirty(false);
 
     // Log full state for debugging (showing only IDs and combatIds)
     console.log("Saved Encounter State", {
@@ -1196,20 +1200,22 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         inputRef={inputRef}
       />
       {/* Save Snackbar to inform user that it has been saved */}
-      <Snackbar
-        open={isSaveSnackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setIsSaveSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      >
-        <Alert
+      {showSaveSnackbar && (
+        <Snackbar
+          open={isSaveSnackbarOpen}
+          autoHideDuration={3000}
           onClose={() => setIsSaveSnackbarOpen(false)}
-          severity={"success"}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         >
-          {t("combat_sim_log_encounter_saved")}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => setIsSaveSnackbarOpen(false)}
+            severity={"success"}
+            sx={{ width: "100%" }}
+          >
+            {t("combat_sim_log_encounter_saved")}
+          </Alert>
+        </Snackbar>
+      )}
       {downloadSnackbar}
     </Box>
   );

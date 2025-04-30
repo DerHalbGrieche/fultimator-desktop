@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
   TextField,
@@ -11,7 +11,10 @@ import {
   Paper,
   CardActions,
   Tooltip,
-  // Removed Dialog related imports
+  Snackbar,
+  Alert,
+  Fade,
+  CircularProgress
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,11 +27,39 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import Layout from "../../components/Layout";
 import { useTheme } from "@mui/material/styles";
 import CustomHeaderAlt from "../../components/common/CustomHeaderAlt";
-import SettingsDialog from "../../components/combatSim/SettingsDialog"; // Import the new component
+import SettingsDialog from "../../components/combatSim/SettingsDialog";
 import { SportsMartialArts, NavigateNext } from "@mui/icons-material";
 import { t } from "../../translation/translate";
 
 const MAX_ENCOUNTERS = 100;
+
+// Define settings schema and defaults to maintain consistency
+const SETTINGS_CONFIG = {
+  autoUseMP: {
+    key: "combatSimAutoUseMP",
+    defaultValue: true
+  },
+  autoOpenLogs: {
+    key: "combatSimAutoOpenLogs",
+    defaultValue: true
+  },
+  useDragAndDrop: {
+    key: "combatSimUseDragAndDrop",
+    defaultValue: true
+  },
+  autosaveEnabled: {
+    key: "combatSimAutosave",
+    defaultValue: false
+  },
+  autosaveInterval: {
+    key: "combatSimAutosaveInterval",
+    defaultValue: 30
+  },
+  showSaveSnackbar: {
+    key: "combatSimShowSaveSnackbar",
+    defaultValue: true
+  }
+};
 
 export default function CombatSimulatorEncounters() {
   return (
@@ -41,122 +72,161 @@ export default function CombatSimulatorEncounters() {
 const CombatSimEncounters = () => {
   const [encounters, setEncounters] = useState([]);
   const [encounterName, setEncounterName] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false); // State for settings dialog
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+  
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-
-  // Combine settings into a single state object
-  const [settings, setSettings] = useState({
-    autoUseMP:
-      localStorage.getItem("combatSimAutoUseMP") === null
-        ? true
-        : localStorage.getItem("combatSimAutoUseMP") === "true",
-    autoOpenLogs:
-      localStorage.getItem("combatSimAutoOpenLogs") === null
-        ? true
-        : localStorage.getItem("combatSimAutoOpenLogs") === "true",
-    useDragAndDrop:
-      localStorage.getItem("combatSimUseDragAndDrop") === null
-        ? true
-        : localStorage.getItem("combatSimUseDragAndDrop") === "true",
-    autosaveEnabled:
-      localStorage.getItem("combatSimAutosave") === null
-        ? true
-        : localStorage.getItem("combatSimAutosave") === "true",
+  
+  // Initialize settings from localStorage with defaults
+  const [settings, setSettings] = useState(() => {
+    const initialSettings = {};
+    
+    // Set up each setting with value from localStorage or default
+    Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
+      const storedValue = localStorage.getItem(config.key);
+      
+      // Handle numeric values like autosaveInterval separately
+      if (settingName === "autosaveInterval") {
+        initialSettings[settingName] = storedValue === null ? 
+          config.defaultValue : 
+          parseInt(storedValue, 10);
+      } else {
+        initialSettings[settingName] = storedValue === null ? 
+          config.defaultValue : 
+          storedValue === "true";
+      }
+    });
+    
+    return initialSettings;
   });
 
   // Handler to update individual settings
-  const handleSettingChange = (name, value) => {
-    setSettings((prevSettings) => ({
+  const handleSettingChange = useCallback((name, value) => {
+    setSettings(prevSettings => ({
       ...prevSettings,
       [name]: value,
     }));
-  };
+  }, []);
 
+  // Fetch encounters data
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const encounterList = await getEncounterList();
+      encounterList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setEncounters(encounterList);
+    } catch (error) {
+      console.error("Error fetching encounters:", error);
+      showNotification("Failed to load encounters", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initialize settings and fetch data on mount
   useEffect(() => {
-    // Ensure default values are set in localStorage if they don't exist
-    const defaultSettings = {
-      combatSimAutoUseMP: "true",
-      combatSimAutoOpenLogs: "true",
-      combatSimUseDragAndDrop: "true",
-      combatSimAutosave: "false", // Disable autosave by default to prevent accidental saves
-    };
-
-    Object.entries(defaultSettings).forEach(([key, defaultValue]) => {
-      if (localStorage.getItem(key) === null) {
-        localStorage.setItem(key, defaultValue);
+    // Ensure default settings are in localStorage
+    Object.entries(SETTINGS_CONFIG).forEach(([config]) => {
+      if (localStorage.getItem(config.key) === null) {
+        localStorage.setItem(config.key, config.defaultValue?.toString());
       }
     });
-
-    // Initialize state from localStorage - This part might be redundant now with the initial state definition, but safe to keep.
-    setSettings({
-      autoUseMP: localStorage.getItem("combatSimAutoUseMP") === "true",
-      autoOpenLogs: localStorage.getItem("combatSimAutoOpenLogs") === "true",
-      useDragAndDrop:
-        localStorage.getItem("combatSimUseDragAndDrop") === "true",
-      autosaveEnabled: localStorage.getItem("combatSimAutosave") === "true",
-    });
-  }, []);
-
-  useEffect(() => {
+    
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const handleSaveSettings = () => {
-    // Save settings from the state object
-    localStorage.setItem("combatSimAutoUseMP", settings.autoUseMP);
-    localStorage.setItem("combatSimAutoOpenLogs", settings.autoOpenLogs);
-    localStorage.setItem("combatSimUseDragAndDrop", settings.useDragAndDrop);
-    localStorage.setItem("combatSimAutosave", settings.autosaveEnabled);
-    setSettingsOpen(false);
+  // Show notification helper
+  const showNotification = (message, severity = 'success') => {
+    setNotification({ open: true, message, severity });
   };
 
-  const handleCloseSettings = () => {
-    setSettingsOpen(false);
-    // Reset settings state from localStorage on close/cancel
-    setSettings({
-      autoUseMP: localStorage.getItem("combatSimAutoUseMP") === "true",
-      autoOpenLogs: localStorage.getItem("combatSimAutoOpenLogs") === "true",
-      useDragAndDrop:
-        localStorage.getItem("combatSimUseDragAndDrop") === "true",
-      autosaveEnabled: localStorage.getItem("combatSimAutosave") === "true",
+  // Handle notification close
+  const handleNotificationClose = () => {
+    setNotification(prev => ({ ...prev, open: false }));
+  };
+
+  // Save settings to localStorage
+  const handleSaveSettings = useCallback(() => {
+    Object.entries(settings).forEach(([settingName, value]) => {
+      const key = SETTINGS_CONFIG[settingName]?.key;
+      if (key) {
+        localStorage.setItem(key, value.toString());
+      }
     });
-  };
+    
+    setSettingsOpen(false);
+    showNotification(t("combat_sim_settings_saved_successfully"));
+  }, [settings]);
 
-  const fetchData = async () => {
-    const encounterList = await getEncounterList();
-    encounterList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    setEncounters(encounterList);
-  };
+  // Close settings dialog without saving changes
+  const handleCloseSettings = useCallback(() => {
+    setSettingsOpen(false);
+    
+    // Reset settings state from localStorage on close/cancel
+    const restoredSettings = {};
+    Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
+      if (settingName === "autosaveInterval") {
+        const storedValue = localStorage.getItem(config.key);
+        restoredSettings[settingName] = storedValue === null ? 
+          config.defaultValue : 
+          parseInt(storedValue, 10);
+      } else {
+        restoredSettings[settingName] = localStorage.getItem(config.key) === "true";
+      }
+    });
+    
+    setSettings(restoredSettings);
+  }, []);
 
   const handleEncounterNameChange = (event) => {
     setEncounterName(event.target.value);
   };
 
   const handleSaveEncounter = async () => {
-    if (!encounterName || encounters.length >= MAX_ENCOUNTERS) return;
+    if (!encounterName.trim() || encounters.length >= MAX_ENCOUNTERS) return;
 
-    const newEncounter = {
-      name: encounterName,
-      round: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const newEncounter = {
+        name: encounterName.trim(),
+        round: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await addEncounter(newEncounter);
-    fetchData();
-    setEncounterName("");
+      await addEncounter(newEncounter);
+      await fetchData();
+      setEncounterName("");
+      showNotification(t("combat_sim_encounter_created"));
+    } catch (error) {
+      console.error("Error saving encounter:", error);
+      showNotification(t("combat_sim_error_creating_encounter"), "error");
+    }
   };
 
   const handleDeleteEncounter = async (id) => {
-    await deleteEncounter(id);
-    fetchData();
+    try {
+      await deleteEncounter(id);
+      await fetchData();
+      showNotification(t("combat_sim_encounter_deleted"));
+    } catch (error) {
+      console.error("Error deleting encounter:", error);
+      showNotification(t("combat_sim_error_deleting_encounter"), "error");
+    }
   };
 
   const handleNavigateToEncounter = (id) => {
     navigate(`/combat-sim/${id}`);
   };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && encounterName.trim()) {
+      handleSaveEncounter();
+    }
+  };
+
 
   return (
     <Box sx={{ padding: 3, maxWidth: "1200px", margin: "auto" }}>
@@ -190,6 +260,7 @@ const CombatSimEncounters = () => {
                 variant="outlined"
                 fullWidth
                 value={encounterName}
+                onKeyDown={handleKeyDown}
                 onChange={handleEncounterNameChange}
                 inputProps={{ maxLength: 200 }}
               />
@@ -232,7 +303,12 @@ const CombatSimEncounters = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ marginTop: 2 }}>
-        {encounters.map((encounter) => (
+        {isLoading && (
+          <Grid item xs={12}>
+            <CircularProgress />
+          </Grid>
+        )}
+        {!isLoading && encounters.map((encounter) => (
           <Grid item xs={12} sm={6} md={4} key={encounter.id}>
             <Card
               sx={{
@@ -313,6 +389,24 @@ const CombatSimEncounters = () => {
         settings={settings}
         onSettingChange={handleSettingChange}
       />
+
+       {/* Notifications */}
+       <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={handleNotificationClose}
+        TransitionComponent={Fade}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleNotificationClose} 
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
