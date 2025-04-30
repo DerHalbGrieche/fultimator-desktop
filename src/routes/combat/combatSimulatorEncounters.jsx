@@ -58,6 +58,10 @@ const SETTINGS_CONFIG = {
   showSaveSnackbar: {
     key: "combatSimShowSaveSnackbar",
     defaultValue: true
+  },
+  hideLogs: {
+    key: "combatSimHideLogs",
+    defaultValue: false
   }
 };
 

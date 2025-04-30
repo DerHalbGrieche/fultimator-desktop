@@ -28,6 +28,7 @@ import SaveAsIcon from "@mui/icons-material/SaveAs";
 import HistoryIcon from "@mui/icons-material/History";
 import TimerIcon from "@mui/icons-material/Timer";
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import InfoIcon from '@mui/icons-material/Info';
 
 const SettingsDialog = ({
   open,
@@ -40,7 +41,7 @@ const SettingsDialog = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDarkMode = theme.palette.mode === "dark";
 
-  const { autoUseMP, autoOpenLogs, useDragAndDrop, autosaveEnabled, autosaveInterval, showSaveSnackbar } = settings;
+  const { autoUseMP, autoOpenLogs, useDragAndDrop, autosaveEnabled, autosaveInterval, showSaveSnackbar, hideLogs } = settings;
 
   const handleSwitchChange = (name) => (event) => {
     onSettingChange(name, event.target.checked);
@@ -126,6 +127,13 @@ const SettingsDialog = ({
           label: t("combat_sim_show_save_snackbar"),
           icon: <NotificationsIcon />,
           type: "switch"
+        },
+        {
+          name: "hideLogs",
+          value: hideLogs,
+          label: t("combat_sim_log_hide"),
+          icon: <InfoIcon />,
+          type: "switch"
         }
       ]
     }
@@ -170,7 +178,7 @@ const SettingsDialog = ({
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ mt: 0, overflowY: "auto", maxHeight: isMobile ? "calc(100% - 120px)" : "60vh" }}>
+        <Box sx={{ mt: 0, overflowY: "auto", maxHeight: isMobile ? "100%" : "60vh" }}>
           {settingsCategories.map((category, categoryIndex) => (
             <Paper
               key={categoryIndex}

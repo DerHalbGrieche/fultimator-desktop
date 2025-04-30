@@ -66,6 +66,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const showSaveSnackbar =
     localStorage.getItem("combatSimShowSaveSnackbar") === "true";
 
+  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+
   // Encounter states
   const [encounter, setEncounter] = useState(null); // State for the current encounter
   const [npcList, setNpcList] = useState([]); // List of available NPCs ready for selection
@@ -1118,13 +1120,13 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             onSortEnd={handleSortEnd}
           />
           {/* Combat Log */}
-          <CombatLog
+          {!hideLogs && <CombatLog
             isMobile={false}
             logs={logs}
             open={logOpen}
             onToggle={handleLogToggle}
             clearLogs={clearLogs}
-          />
+          />}
         </Box>
         {/* NPC Detail Resize Handle */}
         {selectedNPC && (
