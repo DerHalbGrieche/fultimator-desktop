@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,7 @@ import {
   Paper,
   TextField,
   InputAdornment,
+  Collapse,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { t } from "../../translation/translate";
@@ -28,6 +29,8 @@ import SaveAsIcon from "@mui/icons-material/SaveAs";
 import HistoryIcon from "@mui/icons-material/History";
 import TimerIcon from "@mui/icons-material/Timer";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog } from "react-icons/go";
 import { GiBurningDot } from "react-icons/gi";
@@ -43,6 +46,19 @@ const SettingsDialog = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
+
+  // State to track which categories are expanded
+  const [expandedCategories, setExpandedCategories] = useState({
+    automation: true,
+    interface: true,
+  });
+
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
 
   const {
     autoUseMP,
@@ -93,6 +109,7 @@ const SettingsDialog = ({
   const settingsCategories = [
     {
       title: t("combat_sim_settings_automation"),
+      key: "automation",
       items: [
         {
           // Automatically use MP when NPC casts spells
@@ -131,6 +148,7 @@ const SettingsDialog = ({
     },
     {
       title: t("combat_sim_settings_interface"),
+      key: "interface",
       items: [
         {
           // Use drag and drop to move items in the list
@@ -256,79 +274,93 @@ const SettingsDialog = ({
                     : "rgba(0,0,0,0.03)",
                   px: 2,
                   py: 1.5,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  borderBottom: expandedCategories[category.key] ? `1px solid ${theme.palette.divider}` : 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
                 }}
+                onClick={() => toggleCategory(category.key)}
               >
                 <Typography variant="subtitle1" fontWeight="bold">
                   {category.title}
                 </Typography>
+                <IconButton 
+                  size="small" 
+                  sx={{ p: 0.5 }}
+                  aria-label={expandedCategories[category.key] ? "collapse section" : "expand section"}
+                >
+                  {expandedCategories[category.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
               </Box>
 
-              <List sx={{ py: 0 }}>
-                {category.items.map((item, itemIndex) => (
-                  <ListItem
-                    key={itemIndex}
-                    sx={{
-                      borderBottom:
-                        itemIndex < category.items.length - 1
-                          ? `1px solid ${theme.palette.divider}`
-                          : "none",
-                      py: 0.5,
-                      alignItems: "center",
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      {React.cloneElement(item.icon, {
-                        style: {
-                          color:
-                            (item.type === "switch" && item.value) ||
-                            (item.type === "number" && !item.disabled)
-                              ? isDarkMode
-                                ? theme.palette.secondary.main
-                                : theme.palette.primary.main
-                              : theme.palette.text.disabled,
-                          fontSize: 20, // Explicit size for all icons
-                          verticalAlign: "middle",
-                          ...item.icon.props.style, // Preserve existing styles
-                        },
-                        size: 20, // For react-icons
-                        fontSize: "small", // For MUI icons
-                      })}
-                    </ListItemIcon>
-                    <ListItemText primary={item.label} sx={{ my: 0 }} />
-                    {item.type === "switch" && (
-                      <Switch
-                        checked={item.value}
-                        onChange={handleSwitchChange(item.name)}
-                        size="medium"
-                        color="primary"
-                        inputProps={{ "aria-label": item.label }}
-                      />
-                    )}
-                    {item.type === "number" && (
-                      <TextField
-                        type="number"
-                        value={item.value}
-                        onChange={handleIntervalChange}
-                        onBlur={handleIntervalBlur}
-                        disabled={item.disabled}
-                        size="small"
-                        sx={{ width: "100px" }}
-                        slotProps={{
-                          input: {
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                sec
-                              </InputAdornment>
-                            ),
-                            inputProps: { step: 5 },
+              <Collapse in={expandedCategories[category.key]}>
+                <List sx={{ py: 0 }}>
+                  {category.items.map((item, itemIndex) => (
+                    <ListItem
+                      key={itemIndex}
+                      sx={{
+                        borderBottom:
+                          itemIndex < category.items.length - 1
+                            ? `1px solid ${theme.palette.divider}`
+                            : "none",
+                        py: 0.5,
+                        alignItems: "center",
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        {React.cloneElement(item.icon, {
+                          style: {
+                            color:
+                              (item.type === "switch" && item.value) ||
+                              (item.type === "number" && !item.disabled)
+                                ? isDarkMode
+                                  ? theme.palette.secondary.main
+                                  : theme.palette.primary.main
+                                : theme.palette.text.disabled,
+                            fontSize: 20, // Explicit size for all icons
+                            verticalAlign: "middle",
+                            ...item.icon.props.style, // Preserve existing styles
                           },
-                        }}
-                      />
-                    )}
-                  </ListItem>
-                ))}
-              </List>
+                          size: 20, // For react-icons
+                          fontSize: "small", // For MUI icons
+                        })}
+                      </ListItemIcon>
+                      <ListItemText primary={item.label} sx={{ my: 0 }} />
+                      {item.type === "switch" && (
+                        <Switch
+                          checked={item.value}
+                          onChange={handleSwitchChange(item.name)}
+                          size="medium"
+                          color="primary"
+                          inputProps={{ "aria-label": item.label }}
+                        />
+                      )}
+                      {item.type === "number" && (
+                        <TextField
+                          type="number"
+                          value={item.value}
+                          onChange={handleIntervalChange}
+                          onBlur={handleIntervalBlur}
+                          disabled={item.disabled}
+                          size="small"
+                          sx={{ width: "100px" }}
+                          slotProps={{
+                            input: {
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  sec
+                                </InputAdornment>
+                              ),
+                              inputProps: { step: 5 },
+                            },
+                          }}
+                        />
+                      )}
+                    </ListItem>
+                  ))}
+                </List>
+              </Collapse>
             </Paper>
           ))}
         </Box>
