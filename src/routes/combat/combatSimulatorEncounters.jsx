@@ -31,64 +31,9 @@ import SettingsDialog from "../../components/combatSim/SettingsDialog";
 import { SportsMartialArts, NavigateNext } from "@mui/icons-material";
 import { t } from "../../translation/translate";
 import { globalConfirm } from "../../utility/globalConfirm";
+import { SETTINGS_CONFIG } from "../../utility/combatSimSettings";
 
 const MAX_ENCOUNTERS = 100;
-
-// Define settings schema and defaults to maintain consistency
-const SETTINGS_CONFIG = {
-  autoUseMP: {
-    key: "combatSimAutoUseMP",
-    defaultValue: true,
-  },
-  autoOpenLogs: {
-    key: "combatSimAutoOpenLogs",
-    defaultValue: true,
-  },
-  useDragAndDrop: {
-    key: "combatSimUseDragAndDrop",
-    defaultValue: true,
-  },
-  autosaveEnabled: {
-    key: "combatSimAutosave",
-    defaultValue: false,
-  },
-  autosaveInterval: {
-    key: "combatSimAutosaveInterval",
-    defaultValue: 30,
-  },
-  showSaveSnackbar: {
-    key: "combatSimShowSaveSnackbar",
-    defaultValue: true,
-  },
-  hideLogs: {
-    key: "combatSimHideLogs",
-    defaultValue: false,
-  },
-  showBaseAttackEffect: {
-    key: "combatSimShowBaseAttackEffect",
-    defaultValue: true,
-  },
-  showWeaponAttackEffect: {
-    key: "combatSimShowWeaponAttackEffect",
-    defaultValue: true,
-  },
-  showSpellEffect: {
-    key: "combatSimShowSpellEffect",
-    defaultValue: true,
-  },
-  autoCheckTurnAfterRoll: {
-    key: "combatSimAutoCheckTurnAfterRoll",
-    defaultValue: false,
-  },
-  askBeforeRemove: {
-    key: "combatSimAskBeforeRemove",
-    defaultValue: true,
-  },
-  autoRemoveNPCFaint: {
-    key: "combatSimAutoRemoveNPCFaint",
-    defaultValue: false,
-  },
-};
 
 export default function CombatSimulatorEncounters() {
   return (

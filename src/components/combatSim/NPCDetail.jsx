@@ -95,8 +95,8 @@ const NPCDetail = ({
       ? clickedData.maxTargets
       : 1;
 
-  const handleConfirmSpell = () => {
-    const finalMpCost = clickedData.mp * numTargets;
+  const handleConfirmSpell = (spellData) => {
+    const finalMpCost = spellData.mp * numTargets;
 
     if (autoUseMP && finalMpCost > selectedNPC?.combatStats?.currentMp) {
       setError("Not enough MP!");
@@ -109,7 +109,7 @@ const NPCDetail = ({
     if (autoUseMP) {
       handleUseMP(finalMpCost);
     }
-    if (clickedData.type === "offensive") {
+    if (spellData.type === "offensive") {
       // Roll the attack
       const {
         diceResults,
@@ -117,7 +117,7 @@ const NPCDetail = ({
         damage,
         isCriticalFailure,
         isCriticalSuccess,
-      } = rollAttack(clickedData, "spell");
+      } = rollAttack(spellData, "spell");
       // log the spell
       addLog("combat_sim_log_spell_offensive_roll", "--isSpell--", {
         npcName:
@@ -125,7 +125,7 @@ const NPCDetail = ({
           (selectedNPC?.combatStats?.combatNotes
             ? "【" + selectedNPC.combatStats.combatNotes + "】"
             : ""),
-        spellName: clickedData.name,
+        spellName: spellData.name,
         targets: numTargets,
         dice1: diceResults.attribute1,
         dice2: diceResults.attribute2,
@@ -133,7 +133,7 @@ const NPCDetail = ({
           calcMagic(selectedNPC) !== 0 ? " + " + calcMagic(selectedNPC) : "",
         totalHitScore: totalHitScore,
         hr: damage,
-        effect: showSpellEffect && clickedData.effect ? clickedData.effect : "",
+        effect: showSpellEffect && spellData.effect ? spellData.effect : "",
       });
 
       if (isCriticalFailure) {
@@ -166,11 +166,11 @@ const NPCDetail = ({
           (selectedNPC?.combatStats?.combatNotes
             ? "【" + selectedNPC.combatStats.combatNotes + "】"
             : ""),
-        clickedData.name,
+            spellData.name,
         numTargets,
         {
           effect:
-            showSpellEffect && clickedData.effect ? clickedData.effect : "",
+            showSpellEffect && spellData.effect ? spellData.effect : "",
           markdown: true,
         }
       );
@@ -187,6 +187,9 @@ const NPCDetail = ({
         checkNewTurn(selectedNPC.combatId);
       }, 100);
     }
+
+    // reset numTargets
+    setNumTargets(1);
   };
 
   const handleAttack = (attack, attackType) => {
@@ -571,6 +574,7 @@ const NPCDetail = ({
             setClickedData={setClickedData}
             setOpen={setOpen}
             handleAttack={handleAttack}
+            handleSpell={handleConfirmSpell}
           />
         )}
         {tabIndex === 3 && (
@@ -703,7 +707,7 @@ const NPCDetail = ({
             {t("Cancel")}
           </Button>
           <Button
-            onClick={handleConfirmSpell}
+            onClick={() => handleConfirmSpell(clickedData)}
             variant="contained"
             color="primary"
             sx={{ borderRadius: 2, textTransform: "uppercase", px: 3 }}

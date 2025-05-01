@@ -21,21 +21,31 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { t } from "../../translation/translate";
-import CloseIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import SaveAsIcon from "@mui/icons-material/SaveAs";
-import HistoryIcon from "@mui/icons-material/History";
-import TimerIcon from "@mui/icons-material/Timer";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Close as CloseIcon,
+  Save as SaveIcon,
+  AutoFixHigh as AutoUseMPIcon,
+  DragIndicator as UseDragAndDropIcon,
+  SaveAs as AutosaveIcon,
+  History as AutoOpenLogsIcon,
+  Timer as AutosaveIntervalIcon,
+  Notifications as ShowSaveSnackbarIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  CheckCircle as AutoCheckTurnIcon,
+  Delete as AskBeforeRemoveIcon,
+  TimesOneMobiledata as AutoRollSpellOneTargetIcon,
+  Restore as ResetDefaultsIcon,
+} from "@mui/icons-material";
 import { PiSwordFill } from "react-icons/pi";
-import { GoLog } from "react-icons/go";
-import { GiBurningDot, GiClawSlashes, GiDeathSkull } from "react-icons/gi";
+import { GoLog as HideLogsIcon } from "react-icons/go";
+import {
+  GiBurningDot as ShowSpellEffectIcon,
+  GiClawSlashes as ShowBaseAttackEffectIcon,
+  GiDeathSkull as AutoRemoveNPCFaintIcon,
+} from "react-icons/gi";
+import { getDefaultSettings } from "../../utility/combatSimSettings";
+import { globalConfirm } from "../../utility/globalConfirm";
 
 const SettingsDialog = ({
   open,
@@ -75,6 +85,7 @@ const SettingsDialog = ({
     autoCheckTurnAfterRoll,
     askBeforeRemove,
     autoRemoveNPCFaint,
+    autoRollSpellOneTarget,
   } = settings;
 
   const handleSwitchChange = (name) => (event) => {
@@ -120,7 +131,7 @@ const SettingsDialog = ({
           name: "autoCheckTurnAfterRoll",
           value: autoCheckTurnAfterRoll,
           label: t("combat_sim_settings_auto_check_turn"),
-          icon: <CheckCircleIcon />,
+          icon: <AutoCheckTurnIcon />,
           type: "switch",
         },
         {
@@ -128,7 +139,15 @@ const SettingsDialog = ({
           name: "autoUseMP",
           value: autoUseMP,
           label: t("combat_sim_settings_auto_use_mp"),
-          icon: <AutoFixHighIcon />,
+          icon: <AutoUseMPIcon />,
+          type: "switch",
+        },
+        {
+          // Automatically roll for spells that have 1 target without asking the amount of targets
+          name: "autoRollSpellOneTarget",
+          value: autoRollSpellOneTarget,
+          label: t("combat_sim_settings_auto_roll_spell_one_target"),
+          icon: <AutoRollSpellOneTargetIcon />,
           type: "switch",
         },
         {
@@ -136,7 +155,7 @@ const SettingsDialog = ({
           name: "autoOpenLogs",
           value: autoOpenLogs,
           label: t("combat_sim_settings_auto_open_logs"),
-          icon: <HistoryIcon />,
+          icon: <AutoOpenLogsIcon />,
           type: "switch",
         },
         {
@@ -144,7 +163,7 @@ const SettingsDialog = ({
           name: "autosaveEnabled",
           value: autosaveEnabled,
           label: t("combat_sim_settings_autosave_desktop"),
-          icon: <SaveAsIcon />,
+          icon: <AutosaveIcon />,
           type: "switch",
         },
         {
@@ -152,7 +171,7 @@ const SettingsDialog = ({
           name: "autosaveInterval",
           value: autosaveInterval,
           label: t("combat_sim_settings_autosave_interval"),
-          icon: <TimerIcon />,
+          icon: <AutosaveIntervalIcon />,
           type: "number",
           disabled: !autosaveEnabled,
         },
@@ -161,7 +180,7 @@ const SettingsDialog = ({
           name: "askBeforeRemove",
           value: askBeforeRemove,
           label: t("combat_sim_settings_ask_before_remove"),
-          icon: <DeleteIcon />,
+          icon: <AskBeforeRemoveIcon />,
           type: "switch",
         },
         {
@@ -169,7 +188,7 @@ const SettingsDialog = ({
           name: "autoRemoveNPCFaint",
           value: autoRemoveNPCFaint,
           label: t("combat_sim_settings_auto_remove_npc_faint"),
-          icon: <GiDeathSkull />,
+          icon: <AutoRemoveNPCFaintIcon />,
           type: "switch",
         },
       ],
@@ -183,7 +202,7 @@ const SettingsDialog = ({
           name: "useDragAndDrop",
           value: useDragAndDrop,
           label: t("combat_sim_settings_use_drag_and_drop"),
-          icon: <DragIndicatorIcon />,
+          icon: <UseDragAndDropIcon />,
           type: "switch",
         },
         {
@@ -191,7 +210,7 @@ const SettingsDialog = ({
           name: "showSaveSnackbar",
           value: showSaveSnackbar,
           label: t("combat_sim_settings_show_save_snackbar"),
-          icon: <NotificationsIcon />,
+          icon: <ShowSaveSnackbarIcon />,
           type: "switch",
         },
         {
@@ -199,7 +218,7 @@ const SettingsDialog = ({
           name: "hideLogs",
           value: hideLogs,
           label: t("combat_sim_settings_log_hide"),
-          icon: <GoLog />,
+          icon: <HideLogsIcon />,
           type: "switch",
         },
         {
@@ -207,7 +226,7 @@ const SettingsDialog = ({
           name: "showBaseAttackEffect",
           value: showBaseAttackEffect,
           label: t("combat_sim_settings_show_base_attack_effect"),
-          icon: <GiClawSlashes />,
+          icon: <ShowBaseAttackEffectIcon />,
           type: "switch",
         },
         {
@@ -223,12 +242,28 @@ const SettingsDialog = ({
           name: "showSpellEffect",
           value: showSpellEffect,
           label: t("combat_sim_settings_show_spell_effect"),
-          icon: <GiBurningDot />,
+          icon: <ShowSpellEffectIcon />,
           type: "switch",
         },
       ],
     },
   ];
+
+  const handleResetDefaults = async () => {
+    const confirmReset = await globalConfirm(
+      t("combat_sim_settings_reset_defaults_confirm")
+    );
+
+    if (!confirmReset) return;
+
+    // Get default settings
+    const defaultSettings = getDefaultSettings();
+
+    // Update all settings at once
+    Object.entries(defaultSettings).forEach(([name, value]) => {
+      onSettingChange(name, value);
+    });
+  };
 
   return (
     <Dialog
@@ -407,40 +442,75 @@ const SettingsDialog = ({
 
       <DialogActions
         sx={{
-          justifyContent: "flex-end",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 0,
           p: 2,
           borderTop: `1px solid ${theme.palette.divider}`,
-          position: isMobile ? "sticky" : "relative",
+          position: "relative",
           bottom: 0,
           bgcolor: theme.palette.background.paper,
         }}
       >
-        <Button
-          onClick={onClose}
-          color="inherit"
-          variant="outlined"
+        {/* Left side - Reset button (on mobile it'll appear first in column) */}
+        <Box
           sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            px: 3,
-            mr: 1,
+            display: "block",
+            justifyContent: "flex-start",
           }}
         >
-          {t("Cancel")}
-        </Button>
-        <Button
-          onClick={onSave}
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            px: 3,
-          }}
-        >
-          {t("Save Changes")}
-        </Button>
+          {isMobile ? (
+            <Button
+              color="inherit"
+              variant="outlined"
+              onClick={handleResetDefaults}
+              sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+            >
+              <ResetDefaultsIcon />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleResetDefaults}
+              color="inherit"
+              variant="outlined"
+              sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+              startIcon={<ResetDefaultsIcon />}
+            >
+              {t("combat_sim_settings_reset_defaults")}
+            </Button>
+          )}
+        </Box>
+
+        {/* Right side - Cancel and Save buttons */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            onClick={onClose}
+            color="inherit"
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              px: 3,
+              mr: 1,
+            }}
+          >
+            {t("Cancel")}
+          </Button>
+          <Button
+            onClick={onSave}
+            variant="contained"
+            color="primary"
+            startIcon={<SaveIcon />}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              px: 3,
+            }}
+          >
+            {t("Save Changes")}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );

@@ -19,8 +19,11 @@ import Diamond from "../Diamond";
 import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
 import { t } from "../../translation/translate";
 
-const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
+const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack, handleSpell }) => {
   const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+  const autoUseMP = localStorage.getItem("combatSimAutoUseMP") === "true";
+  const autoRollSpellOneTarget =
+    localStorage.getItem("combatSimAutoRollSpellOneTarget") === "true";
 
   const generateButtonLabel = (attack) => {
     const attributeMap = {
@@ -103,14 +106,29 @@ const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
     );
   };
 
-  const handleSpellWithNoTarget = (npcData) => {
-    // Set the spell target to 1
-    const updatedData = {
-      ...npcData,
-      maxTargets: 1,
-    };
-    setClickedData(updatedData);
-    setOpen(true);
+  const handleSpellClick = (spellData) => {
+    let updatedSpellData = spellData;
+    if (!spellData.maxTargets || spellData.maxTargets === 0) {
+      updatedSpellData = {
+        ...spellData,
+        maxTargets: 1,
+      };
+    }
+
+    setClickedData(updatedSpellData);
+    if (autoRollSpellOneTarget && updatedSpellData.maxTargets === 1) {
+      handleSpell(updatedSpellData);
+    } else {
+      setOpen(true);
+    }
+  };
+
+  // Check if the selected NPC has enough MP to cast the spell for at least 1 target
+  const getHasEnoughMP = (selectedNPC, spellData) => {
+    if (!autoUseMP) return true;
+    const mpCost = spellData.mp;
+    const currentMp = selectedNPC.combatStats.currentMp;
+    return mpCost <= currentMp;
   };
 
   return (
@@ -236,11 +254,8 @@ const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
                 variant="contained"
                 color="primary"
                 onClick={() => {
-                  if (type === "Spell" && data.maxTargets >= 0) {
-                    setClickedData(data);
-                    setOpen(true);
-                  } else if (type === "Spell" && !data.maxTargets) {
-                    handleSpellWithNoTarget(data);
+                  if (type === "Spell") {
+                    handleSpellClick(data);
                   } else {
                     handleAttack(
                       data,
@@ -252,6 +267,9 @@ const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
                     );
                   }
                 }}
+                disabled={
+                  type === "Spell" && !getHasEnoughMP(selectedNPC, data)
+                }
                 sx={{
                   color: "#fff",
                   minWidth: 40,
