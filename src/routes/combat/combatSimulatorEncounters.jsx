@@ -4,12 +4,9 @@ import {
   TextField,
   Grid,
   Box,
-  Card,
-  CardContent,
   Typography,
   IconButton,
   Paper,
-  CardActions,
   Tooltip,
   Snackbar,
   Alert,
@@ -22,16 +19,16 @@ import {
   addEncounter,
   deleteEncounter,
 } from "../../utility/db";
-import DeleteIcon from "@mui/icons-material/Delete";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Layout from "../../components/Layout";
 import { useTheme } from "@mui/material/styles";
 import CustomHeaderAlt from "../../components/common/CustomHeaderAlt";
 import SettingsDialog from "../../components/combatSim/SettingsDialog";
-import { SportsMartialArts, NavigateNext } from "@mui/icons-material";
+import { SportsMartialArts } from "@mui/icons-material";
 import { t } from "../../translation/translate";
 import { globalConfirm } from "../../utility/globalConfirm";
 import { SETTINGS_CONFIG } from "../../utility/combatSimSettings";
+import EncounterCard from "../../components/combatSim/EncounterCard";
 
 const MAX_ENCOUNTERS = 100;
 
@@ -290,84 +287,41 @@ const CombatSimEncounters = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ marginTop: 2 }}>
-        {isLoading && (
-          <Grid item xs={12}>
-            <CircularProgress />
-          </Grid>
-        )}
-        {!isLoading &&
-          encounters.map((encounter) => (
-            <Grid item xs={12} sm={6} md={4} key={encounter.id}>
-              <Card
-                sx={{
-                  backgroundColor: isDarkMode
-                    ? "#292929"
-                    : theme.palette.background.paper,
-                  borderRadius: 3,
-                  boxShadow: isDarkMode ? 6 : 4,
-                  transition: "0.3s",
-                  "&:hover": {
-                    boxShadow: isDarkMode ? 10 : 8,
-                    transform: "scale(1.03)",
-                  },
-                  cursor: "pointer",
-                  color: theme.palette.text.primary,
-                  position: "relative",
-                }}
-                onClick={() => handleNavigateToEncounter(encounter.id)}
-              >
-                <CardContent sx={{ paddingBottom: "10px" }}>
-                  <Typography
-                    variant="h4"
-                    gutterBottom
-                    sx={{ fontWeight: "bold", color: "text.primary" }}
-                  >
-                    {encounter.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("combat_sim_created")}:{" "}
-                    {new Date(encounter.createdAt).toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("combat_sim_last_updated")}:{" "}
-                    {new Date(encounter.updatedAt).toLocaleString()}
-                  </Typography>
-                </CardContent>
-                <CardActions
-                  sx={{ justifyContent: "flex-end", padding: "10px 16px" }}
-                >
-                  <Tooltip
-                    title={t("Delete")}
-                    enterDelay={300}
-                    leaveDelay={200}
-                    enterNextDelay={300}
-                  >
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEncounter(encounter.id);
-                      }}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </CardActions>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    right: 8,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: theme.palette.text.secondary,
-                  }}
-                >
-                  <NavigateNext fontSize="medium" />
-                </Box>
-              </Card>
-            </Grid>
-          ))}
+  {isLoading ? (
+    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <CircularProgress color="primary" />
+    </Grid>
+  ) : encounters.length === 0 ? (
+    <Grid item xs={12}>
+      <Paper
+        sx={{
+          p: 3,
+          textAlign: 'center',
+          borderRadius: 2,
+          backgroundColor: theme.palette.background.paper,
+          border: `1px dashed ${theme.palette.divider}`,
+        }}
+      >
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          {t("combat_sim_no_encounters")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t("combat_sim_create_first_encounter")}
+        </Typography>
+      </Paper>
+    </Grid>
+  ) : (
+    encounters.map((encounter) => (
+      <Grid item xs={12} sm={6} md={4} key={encounter.id}>
+        <EncounterCard
+          encounter={encounter}
+          onDelete={handleDeleteEncounter}
+          onClick={() => handleNavigateToEncounter(encounter.id)}
+        />
       </Grid>
+    ))
+  )}
+</Grid>
 
       {/* Settings Dialog */}
       <SettingsDialog
