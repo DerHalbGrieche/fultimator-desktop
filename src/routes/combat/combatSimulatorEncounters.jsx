@@ -14,7 +14,7 @@ import {
   Snackbar,
   Alert,
   Fade,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -30,6 +30,7 @@ import CustomHeaderAlt from "../../components/common/CustomHeaderAlt";
 import SettingsDialog from "../../components/combatSim/SettingsDialog";
 import { SportsMartialArts, NavigateNext } from "@mui/icons-material";
 import { t } from "../../translation/translate";
+import { globalConfirm } from "../../utility/globalConfirm";
 
 const MAX_ENCOUNTERS = 100;
 
@@ -37,47 +38,47 @@ const MAX_ENCOUNTERS = 100;
 const SETTINGS_CONFIG = {
   autoUseMP: {
     key: "combatSimAutoUseMP",
-    defaultValue: true
+    defaultValue: true,
   },
   autoOpenLogs: {
     key: "combatSimAutoOpenLogs",
-    defaultValue: true
+    defaultValue: true,
   },
   useDragAndDrop: {
     key: "combatSimUseDragAndDrop",
-    defaultValue: true
+    defaultValue: true,
   },
   autosaveEnabled: {
     key: "combatSimAutosave",
-    defaultValue: false
+    defaultValue: false,
   },
   autosaveInterval: {
     key: "combatSimAutosaveInterval",
-    defaultValue: 30
+    defaultValue: 30,
   },
   showSaveSnackbar: {
     key: "combatSimShowSaveSnackbar",
-    defaultValue: true
+    defaultValue: true,
   },
   hideLogs: {
     key: "combatSimHideLogs",
-    defaultValue: false
+    defaultValue: false,
   },
   showBaseAttackEffect: {
     key: "combatSimShowBaseAttackEffect",
-    defaultValue: true
+    defaultValue: true,
   },
   showWeaponAttackEffect: {
     key: "combatSimShowWeaponAttackEffect",
-    defaultValue: true
+    defaultValue: true,
   },
   showSpellEffect: {
     key: "combatSimShowSpellEffect",
-    defaultValue: true
+    defaultValue: true,
   },
   autoCheckTurnAfterRoll: {
     key: "combatSimAutoCheckTurnAfterRoll",
-    defaultValue: true
+    defaultValue: true,
   },
 };
 
@@ -94,38 +95,42 @@ const CombatSimEncounters = () => {
   const [encounterName, setEncounterName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
-  
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-  
+
   // Initialize settings from localStorage with defaults
   const [settings, setSettings] = useState(() => {
     const initialSettings = {};
-    
+
     // Set up each setting with value from localStorage or default
     Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
       const storedValue = localStorage.getItem(config.key);
-      
+
       // Handle numeric values like autosaveInterval separately
       if (settingName === "autosaveInterval") {
-        initialSettings[settingName] = storedValue === null ? 
-          config.defaultValue : 
-          parseInt(storedValue, 10);
+        initialSettings[settingName] =
+          storedValue === null
+            ? config.defaultValue
+            : parseInt(storedValue, 10);
       } else {
-        initialSettings[settingName] = storedValue === null ? 
-          config.defaultValue : 
-          storedValue === "true";
+        initialSettings[settingName] =
+          storedValue === null ? config.defaultValue : storedValue === "true";
       }
     });
-    
+
     return initialSettings;
   });
 
   // Handler to update individual settings
   const handleSettingChange = useCallback((name, value) => {
-    setSettings(prevSettings => ({
+    setSettings((prevSettings) => ({
       ...prevSettings,
       [name]: value,
     }));
@@ -136,7 +141,9 @@ const CombatSimEncounters = () => {
     setIsLoading(true);
     try {
       const encounterList = await getEncounterList();
-      encounterList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      encounterList.sort(
+        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+      );
       setEncounters(encounterList);
     } catch (error) {
       console.error("Error fetching encounters:", error);
@@ -154,18 +161,18 @@ const CombatSimEncounters = () => {
         localStorage.setItem(config.key, config.defaultValue?.toString());
       }
     });
-    
+
     fetchData();
   }, [fetchData]);
 
   // Show notification helper
-  const showNotification = (message, severity = 'success') => {
+  const showNotification = (message, severity = "success") => {
     setNotification({ open: true, message, severity });
   };
 
   // Handle notification close
   const handleNotificationClose = () => {
-    setNotification(prev => ({ ...prev, open: false }));
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   // Save settings to localStorage
@@ -176,7 +183,7 @@ const CombatSimEncounters = () => {
         localStorage.setItem(key, value.toString());
       }
     });
-    
+
     setSettingsOpen(false);
     showNotification(t("combat_sim_settings_saved_successfully"));
   }, [settings]);
@@ -184,20 +191,22 @@ const CombatSimEncounters = () => {
   // Close settings dialog without saving changes
   const handleCloseSettings = useCallback(() => {
     setSettingsOpen(false);
-    
+
     // Reset settings state from localStorage on close/cancel
     const restoredSettings = {};
     Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
       if (settingName === "autosaveInterval") {
         const storedValue = localStorage.getItem(config.key);
-        restoredSettings[settingName] = storedValue === null ? 
-          config.defaultValue : 
-          parseInt(storedValue, 10);
+        restoredSettings[settingName] =
+          storedValue === null
+            ? config.defaultValue
+            : parseInt(storedValue, 10);
       } else {
-        restoredSettings[settingName] = localStorage.getItem(config.key) === "true";
+        restoredSettings[settingName] =
+          localStorage.getItem(config.key) === "true";
       }
     });
-    
+
     setSettings(restoredSettings);
   }, []);
 
@@ -227,13 +236,19 @@ const CombatSimEncounters = () => {
   };
 
   const handleDeleteEncounter = async (id) => {
-    try {
-      await deleteEncounter(id);
-      await fetchData();
-      showNotification(t("combat_sim_encounter_deleted"));
-    } catch (error) {
-      console.error("Error deleting encounter:", error);
-      showNotification(t("combat_sim_error_deleting_encounter"), "error");
+    const confirmDelete = await globalConfirm(
+      t("combat_sim_delete_encounter_confirm")
+    );
+
+    if (confirmDelete) {
+      try {
+        await deleteEncounter(id);
+        await fetchData();
+        showNotification(t("combat_sim_encounter_deleted"));
+      } catch (error) {
+        console.error("Error deleting encounter:", error);
+        showNotification(t("combat_sim_error_deleting_encounter"), "error");
+      }
     }
   };
 
@@ -242,11 +257,10 @@ const CombatSimEncounters = () => {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && encounterName.trim()) {
+    if (event.key === "Enter" && encounterName.trim()) {
       handleSaveEncounter();
     }
   };
-
 
   return (
     <Box sx={{ padding: 3, maxWidth: "1200px", margin: "auto" }}>
@@ -328,77 +342,78 @@ const CombatSimEncounters = () => {
             <CircularProgress />
           </Grid>
         )}
-        {!isLoading && encounters.map((encounter) => (
-          <Grid item xs={12} sm={6} md={4} key={encounter.id}>
-            <Card
-              sx={{
-                backgroundColor: isDarkMode
-                  ? "#292929"
-                  : theme.palette.background.paper,
-                borderRadius: 3,
-                boxShadow: isDarkMode ? 6 : 4,
-                transition: "0.3s",
-                "&:hover": {
-                  boxShadow: isDarkMode ? 10 : 8,
-                  transform: "scale(1.03)",
-                },
-                cursor: "pointer",
-                color: theme.palette.text.primary,
-                position: "relative",
-              }}
-              onClick={() => handleNavigateToEncounter(encounter.id)}
-            >
-              <CardContent sx={{ paddingBottom: "10px" }}>
-                <Typography
-                  variant="h4"
-                  gutterBottom
-                  sx={{ fontWeight: "bold", color: "text.primary" }}
-                >
-                  {encounter.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("combat_sim_created")}:{" "}
-                  {new Date(encounter.createdAt).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("combat_sim_last_updated")}:{" "}
-                  {new Date(encounter.updatedAt).toLocaleString()}
-                </Typography>
-              </CardContent>
-              <CardActions
-                sx={{ justifyContent: "flex-end", padding: "10px 16px" }}
-              >
-                <Tooltip
-                  title={t("Delete")}
-                  enterDelay={300}
-                  leaveDelay={200}
-                  enterNextDelay={300}
-                >
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteEncounter(encounter.id);
-                    }}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardActions>
-              <Box
+        {!isLoading &&
+          encounters.map((encounter) => (
+            <Grid item xs={12} sm={6} md={4} key={encounter.id}>
+              <Card
                 sx={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: theme.palette.text.secondary,
+                  backgroundColor: isDarkMode
+                    ? "#292929"
+                    : theme.palette.background.paper,
+                  borderRadius: 3,
+                  boxShadow: isDarkMode ? 6 : 4,
+                  transition: "0.3s",
+                  "&:hover": {
+                    boxShadow: isDarkMode ? 10 : 8,
+                    transform: "scale(1.03)",
+                  },
+                  cursor: "pointer",
+                  color: theme.palette.text.primary,
+                  position: "relative",
                 }}
+                onClick={() => handleNavigateToEncounter(encounter.id)}
               >
-                <NavigateNext fontSize="medium" />
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+                <CardContent sx={{ paddingBottom: "10px" }}>
+                  <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{ fontWeight: "bold", color: "text.primary" }}
+                  >
+                    {encounter.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("combat_sim_created")}:{" "}
+                    {new Date(encounter.createdAt).toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("combat_sim_last_updated")}:{" "}
+                    {new Date(encounter.updatedAt).toLocaleString()}
+                  </Typography>
+                </CardContent>
+                <CardActions
+                  sx={{ justifyContent: "flex-end", padding: "10px 16px" }}
+                >
+                  <Tooltip
+                    title={t("Delete")}
+                    enterDelay={300}
+                    leaveDelay={200}
+                    enterNextDelay={300}
+                  >
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteEncounter(encounter.id);
+                      }}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardActions>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right: 8,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  <NavigateNext fontSize="medium" />
+                </Box>
+              </Card>
+            </Grid>
+          ))}
       </Grid>
 
       {/* Settings Dialog */}
@@ -410,19 +425,19 @@ const CombatSimEncounters = () => {
         onSettingChange={handleSettingChange}
       />
 
-       {/* Notifications */}
-       <Snackbar
+      {/* Notifications */}
+      <Snackbar
         open={notification.open}
         autoHideDuration={4000}
         onClose={handleNotificationClose}
         TransitionComponent={Fade}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          onClose={handleNotificationClose} 
+        <Alert
+          onClose={handleNotificationClose}
           severity={notification.severity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {notification.message}
         </Alert>
