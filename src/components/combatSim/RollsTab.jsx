@@ -20,6 +20,8 @@ import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
 import { t } from "../../translation/translate";
 
 const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
+  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+
   const generateButtonLabel = (attack) => {
     const attributeMap = {
       dexterity: "DEX",
@@ -220,49 +222,51 @@ const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack }) => {
               </Box>
             )}
           </Box>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "stretch",
-              my: -1,
-              mx: -2,
-            }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                if (type === "Spell" && data.maxTargets >= 0) {
-                  setClickedData(data);
-                  setOpen(true);
-                } else if (type === "Spell" && !data.maxTargets) {
-                  handleSpellWithNoTarget(data);
-                } else {
-                  handleAttack(
-                    data,
-                    type === "Attack"
-                      ? "attack"
-                      : type === "Weapon Attack"
-                      ? "weapon"
-                      : "spell"
-                  );
-                }
-              }}
+          {!hideLogs && (
+            <Box
               sx={{
-                color: "#fff",
-                minWidth: 40,
-                width: 40,
-                height: "100%",
                 display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                borderRadius: 0,
+                flexDirection: "column",
+                justifyContent: "stretch",
+                my: -1,
+                mx: -2,
               }}
             >
-              <CasinoIcon />
-            </Button>
-          </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  if (type === "Spell" && data.maxTargets >= 0) {
+                    setClickedData(data);
+                    setOpen(true);
+                  } else if (type === "Spell" && !data.maxTargets) {
+                    handleSpellWithNoTarget(data);
+                  } else {
+                    handleAttack(
+                      data,
+                      type === "Attack"
+                        ? "attack"
+                        : type === "Weapon Attack"
+                        ? "weapon"
+                        : "spell"
+                    );
+                  }
+                }}
+                sx={{
+                  color: "#fff",
+                  minWidth: 40,
+                  width: 40,
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 0,
+                }}
+              >
+                <CasinoIcon />
+              </Button>
+            </Box>
+          )}
         </ListItem>
       ))}
     </List>

@@ -32,10 +32,10 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog } from "react-icons/go";
-import { GiBurningDot } from "react-icons/gi";
-import { GiClawSlashes } from "react-icons/gi";
+import { GiBurningDot, GiClawSlashes, GiDeathSkull } from "react-icons/gi";
 
 const SettingsDialog = ({
   open,
@@ -73,6 +73,8 @@ const SettingsDialog = ({
     showWeaponAttackEffect,
     showSpellEffect,
     autoCheckTurnAfterRoll,
+    askBeforeRemove,
+    autoRemoveNPCFaint,
   } = settings;
 
   const handleSwitchChange = (name) => (event) => {
@@ -153,6 +155,22 @@ const SettingsDialog = ({
           icon: <TimerIcon />,
           type: "number",
           disabled: !autosaveEnabled,
+        },
+        {
+          // Ask before removing an NPC
+          name: "askBeforeRemove",
+          value: askBeforeRemove,
+          label: t("combat_sim_settings_ask_before_remove"),
+          icon: <DeleteIcon />,
+          type: "switch",
+        },
+        {
+          // Automatically remove NPC when they faint
+          name: "autoRemoveNPCFaint",
+          value: autoRemoveNPCFaint,
+          label: t("combat_sim_settings_auto_remove_npc_faint"),
+          icon: <GiDeathSkull />,
+          type: "switch",
         },
       ],
     },
@@ -302,9 +320,10 @@ const SettingsDialog = ({
                   sx={{ p: 0.5 }}
                   aria-label={
                     expandedCategories[category.key]
-                      ? "collapse section"
-                      : "expand section"
+                      ? "Collapse section"
+                      : "Expand section"
                   }
+                  aria-expanded={expandedCategories[category.key]}
                 >
                   {expandedCategories[category.key] ? (
                     <ExpandLessIcon />

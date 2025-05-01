@@ -28,6 +28,7 @@ import DamageHealDialog from "../../components/combatSim/DamageHealDialog";
 import CombatLog from "../../components/combatSim/CombatLog";
 import { DragHandle } from "@mui/icons-material";
 import debounce from "lodash.debounce";
+import { globalConfirm } from "../../utility/globalConfirm";
 
 export default function CombatSimulator() {
   const [isDirty, setIsDirty] = useState(false);
@@ -40,63 +41,73 @@ export default function CombatSimulator() {
 }
 
 const CombatSim = ({ setIsDirty, isDirty }) => {
-  // Base states
+  // ========== Base States ==========
   const { id } = useParams(); // Get the encounter ID from the URL
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [loading, setLoading] = useState(true); // Loading state
-  const inputRef = useRef(null);
   const isDarkMode = theme.palette.mode === "dark"; // Check if dark mode is enabled
-  const [npcDetailWidth, setNpcDetailWidth] = useState(30); // NPC detail width in percentage
-  const isResizing = useRef(false); // NPC detail Resizing ref
-  const startX = useRef(0);
-  const startWidth = useRef(npcDetailWidth);
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const inputRef = useRef(null);
+  const [loading, setLoading] = useState(true); // Loading state
+  const [initialized, setInitialized] = useState(false); // Initialized state
+
+  // ========== User Preferences (Local Storage) ==========
   const useDragAndDrop =
     localStorage.getItem("combatSimUseDragAndDrop") === "true";
-  const [initialized, setInitialized] = useState(false);
-  const [lastAutoSaved, setLastAutoSaved] = useState(null);
   const autosaveEnabled = localStorage.getItem("combatSimAutosave") === "true";
   const AUTO_SAVE_DELAY =
-    1000 * localStorage.getItem("combatSimAutosaveInterval") || 30000; // default 30 seconds between autosaves
+    1000 * localStorage.getItem("combatSimAutosaveInterval") || 30000; // default 30 seconds
+  const showSaveSnackbar =
+    localStorage.getItem("combatSimShowSaveSnackbar") === "true";
+  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+  const askBeforeRemove =
+    localStorage.getItem("combatSimAskBeforeRemove") === "true";
+  const autoRemoveNPCFaint =
+    localStorage.getItem("combatSimAutoRemoveNPCFaint") === "true";
+
+  // ========== Encounter States ==========
+  const [encounter, setEncounter] = useState(null); // Current encounter
+  const [encounterName, setEncounterName] = useState(""); // Encounter name
+  const [isEditing, setIsEditing] = useState(false); // Encounter name editing state
+  const [npcList, setNpcList] = useState([]); // Available NPCs
+  const [selectedNPCs, setSelectedNPCs] = useState([]); // Selected NPCs
+  const [selectedNPC, setSelectedNPC] = useState(null); // Selected NPC (for NPC Sheet)
+  const [npcClicked, setNpcClicked] = useState(null); // NPC clicked for HP/MP change
+  const [npcDrawerOpen, setNpcDrawerOpen] = useState(false); // NPC Drawer open (mobile)
+  const [lastSaved, setLastSaved] = useState(null); // Last saved time
+  const [lastAutoSaved, setLastAutoSaved] = useState(null); // Last auto-saved time
+
+  // ========== UI Interaction States ==========
+  const [npcDetailWidth, setNpcDetailWidth] = useState(30); // NPC detail width (%)
+  const isResizing = useRef(false); // Resizing flag
+  const startX = useRef(0);
+  const startWidth = useRef(npcDetailWidth);
   const prevSelectedNpcsRef = useRef(null);
   const prevRoundRef = useRef(null);
   const prevLogsRef = useRef(null);
   const prevEncounterNameRef = useRef(null);
-  const [isSaveSnackbarOpen, setIsSaveSnackbarOpen] = useState(false);
-  const showSaveSnackbar =
-    localStorage.getItem("combatSimShowSaveSnackbar") === "true";
 
-  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+  const [anchorEl, setAnchorEl] = useState(null); // Turns popover anchor
+  const [popoverNpcId, setPopoverNpcId] = useState(null); // Popover NPC ID
+  const [tabIndex, setTabIndex] = useState(0); // NPC sheet/stats/rolls/notes tab index
 
-  // Encounter states
-  const [encounter, setEncounter] = useState(null); // State for the current encounter
-  const [npcList, setNpcList] = useState([]); // List of available NPCs ready for selection
-  const [selectedNPCs, setSelectedNPCs] = useState([]); // State for selected NPCs list
-  const [selectedNPC, setSelectedNPC] = useState(null); // State for selected NPC (for NPC Sheet)
-  const [npcClicked, setNpcClicked] = useState(null); // State for the NPC clicked for HP/MP change
-  const [npcDrawerOpen, setNpcDrawerOpen] = useState(false); // NPC Drawer open state (for mobile)
-  const [lastSaved, setLastSaved] = useState(null); // Track last saved time
-  const [isEditing, setIsEditing] = useState(false); // Editing mode for encounter name
-  const [encounterName, setEncounterName] = useState(""); // Encounter name
-  const [anchorEl, setAnchorEl] = useState(null); // Turns popover anchor element
-  const [popoverNpcId, setPopoverNpcId] = useState(null); // NPC ID for the turns popover
-  const [tabIndex, setTabIndex] = useState(0); // Tab index for the selected NPC sheet/stats/rolls/notes
-  const [open, setOpen] = useState(false); // Dialog open state for HP/MP change
+  const [open, setOpen] = useState(false); // HP/MP dialog open
   const [statType, setStatType] = useState(null); // "HP" or "MP"
-  const [value, setValue] = useState(0); // Value for HP/MP change
-  const [isHealing, setIsHealing] = useState(false); // true = Heal, false = Damage
-  const [damageType, setDamageType] = useState(""); // Type of damage (physical, magical, etc.)
-  const [isGuarding, setIsGuarding] = useState(false); // true = Guarding, false = Not guarding
+  const [value, setValue] = useState(0); // HP/MP value
+  const [isHealing, setIsHealing] = useState(false); // Heal = true, Damage = false
+  const [damageType, setDamageType] = useState(""); // Damage type
+  const [isGuarding, setIsGuarding] = useState(false); // Guarding state
 
-  // Study and Download image states
-  const [selectedStudy, setSelectedStudy] = useState(0); // Study dropdown value
-  const ref = useRef(); // Reference for the NPC sheet image download
+  const [isSaveSnackbarOpen, setIsSaveSnackbarOpen] = useState(false); // Save snackbar open
+
+  // ========== Study and Download Image States ==========
+  const [selectedStudy, setSelectedStudy] = useState(0); // Study dropdown
+  const ref = useRef(); // NPC sheet image ref
   const [downloadImage, downloadSnackbar] = useDownloadImage(
     selectedNPC?.name,
     ref
   ); // Download image hook
 
-  // Logs states
+  // ========== Logs States ==========
   const [logs, setLogs] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const handleLogToggle = (newState) => {
@@ -111,6 +122,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     value4 = null,
     value5 = null
   ) {
+    if (hideLogs) return;
+
     /* max of 50 logs */
     if (logs.length >= 50) {
       // remove the oldest log: {text, timestamp} sorted by {timestamp} and add the new one
@@ -580,7 +593,14 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   };
 
   // Handle Remove NPC from the selected NPCs list
-  const handleRemoveNPC = (npcCombatId) => {
+  const handleRemoveNPC = async (npcCombatId, isAutoRemove = false) => {
+    if (askBeforeRemove && !isAutoRemove) {
+      const confirmRemove = await globalConfirm(
+        t("combat_sim_remove_npc_confirm")
+      );
+      if (!confirmRemove) return;
+    }
+
     setSelectedNPCs((prev) =>
       prev.filter((npc) => npc.combatId !== npcCombatId)
     );
@@ -795,7 +815,12 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
               ? "【" + npcClicked.combatStats.combatNotes + "】"
               : "")
         );
-      }, 500);
+      }, 200);
+      if (autoRemoveNPCFaint) {
+        setTimeout(() => {
+          handleRemoveNPC(npcClicked.combatId, true);
+        }, 300);
+      }
     }
   };
 
@@ -1017,10 +1042,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     const npc = selectedNPCs.find((npc) => npc.combatId === npcId);
     if (npc) {
       const currentTurns = [...npc.combatStats.turns];
-      
+
       // Find the index of the first unused turn
-      const nextTurnIndex = currentTurns.findIndex(turn => !turn);
-      
+      const nextTurnIndex = currentTurns.findIndex((turn) => !turn);
+
       // If there's an unused turn, activate only that one
       if (nextTurnIndex !== -1) {
         const newTurns = [...currentTurns];
@@ -1138,13 +1163,15 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             onSortEnd={handleSortEnd}
           />
           {/* Combat Log */}
-          {!hideLogs && <CombatLog
-            isMobile={false}
-            logs={logs}
-            open={logOpen}
-            onToggle={handleLogToggle}
-            clearLogs={clearLogs}
-          />}
+          {!hideLogs && (
+            <CombatLog
+              isMobile={false}
+              logs={logs}
+              open={logOpen}
+              onToggle={handleLogToggle}
+              clearLogs={clearLogs}
+            />
+          )}
         </Box>
         {/* NPC Detail Resize Handle */}
         {selectedNPC && (

@@ -78,7 +78,15 @@ const SETTINGS_CONFIG = {
   },
   autoCheckTurnAfterRoll: {
     key: "combatSimAutoCheckTurnAfterRoll",
+    defaultValue: false,
+  },
+  askBeforeRemove: {
+    key: "combatSimAskBeforeRemove",
     defaultValue: true,
+  },
+  autoRemoveNPCFaint: {
+    key: "combatSimAutoRemoveNPCFaint",
+    defaultValue: false,
   },
 };
 

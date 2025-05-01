@@ -79,6 +79,7 @@ const NPCDetail = ({
     localStorage.getItem("combatSimShowSpellEffect") === "true";
   const autoCheckTurnAfterRoll =
     localStorage.getItem("combatSimAutoCheckTurnAfterRoll") === "true";
+  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
 
   if (!selectedNPC) return null;
 
@@ -619,7 +620,7 @@ const NPCDetail = ({
           </Tooltip>
         </Box>
       )}
-      {tabIndex === 2 && !isMobile && (
+      {tabIndex === 2 && !isMobile && !hideLogs && (
         <Box
           sx={{
             borderTop: "1px solid " + theme.palette.divider,
@@ -779,7 +780,7 @@ const NPCDetail = ({
               </Box>
             </Grid>
           )}
-          {tabIndex === 2 && (
+          {tabIndex === 2 && !hideLogs && (
             <Grid item xs={12}>
               <StandardRollsSection
                 selectedNPC={selectedNPC}
