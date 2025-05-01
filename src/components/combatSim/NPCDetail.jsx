@@ -57,6 +57,7 @@ const NPCDetail = ({
   addLog,
   openLogs,
   npcDetailWidth,
+  checkNewTurn,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -76,6 +77,8 @@ const NPCDetail = ({
     localStorage.getItem("combatSimShowWeaponAttackEffect") === "true";
   const showSpellEffect =
     localStorage.getItem("combatSimShowSpellEffect") === "true";
+  const autoCheckTurnAfterRoll =
+    localStorage.getItem("combatSimAutoCheckTurnAfterRoll") === "true";
 
   if (!selectedNPC) return null;
 
@@ -164,7 +167,11 @@ const NPCDetail = ({
             : ""),
         clickedData.name,
         numTargets,
-        {effect: showSpellEffect && clickedData.effect ? clickedData.effect : "", markdown: true}
+        {
+          effect:
+            showSpellEffect && clickedData.effect ? clickedData.effect : "",
+          markdown: true,
+        }
       );
     }
     if (autoOpenLogs) {
@@ -173,6 +180,11 @@ const NPCDetail = ({
     if (isMobile) {
       /* close dialog */
       setSelectedNPC(null);
+    }
+    if (autoCheckTurnAfterRoll) {
+      setTimeout(() => {
+        checkNewTurn(selectedNPC.combatId);
+      }, 100);
     }
   };
 
@@ -249,6 +261,12 @@ const NPCDetail = ({
     if (isMobile) {
       /* close dialog */
       setSelectedNPC(null);
+    }
+
+    if (autoCheckTurnAfterRoll) {
+      setTimeout(() => {
+        checkNewTurn(selectedNPC.combatId);
+      }, 100);
     }
   };
 
@@ -402,6 +420,12 @@ const NPCDetail = ({
 
     if (autoOpenLogs) {
       openLogs();
+    }
+
+    if (autoCheckTurnAfterRoll) {
+      setTimeout(() => {
+        checkNewTurn(selectedNPC.combatId);
+      }, 100);
     }
   };
 

@@ -29,8 +29,9 @@ import SaveAsIcon from "@mui/icons-material/SaveAs";
 import HistoryIcon from "@mui/icons-material/History";
 import TimerIcon from "@mui/icons-material/Timer";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog } from "react-icons/go";
 import { GiBurningDot } from "react-icons/gi";
@@ -54,9 +55,9 @@ const SettingsDialog = ({
   });
 
   const toggleCategory = (category) => {
-    setExpandedCategories(prev => ({
+    setExpandedCategories((prev) => ({
       ...prev,
-      [category]: !prev[category]
+      [category]: !prev[category],
     }));
   };
 
@@ -71,6 +72,7 @@ const SettingsDialog = ({
     showBaseAttackEffect,
     showWeaponAttackEffect,
     showSpellEffect,
+    autoCheckTurnAfterRoll,
   } = settings;
 
   const handleSwitchChange = (name) => (event) => {
@@ -112,10 +114,18 @@ const SettingsDialog = ({
       key: "automation",
       items: [
         {
+          // Automatically check for new turns after rolling
+          name: "autoCheckTurnAfterRoll",
+          value: autoCheckTurnAfterRoll,
+          label: t("combat_sim_settings_auto_check_turn"),
+          icon: <CheckCircleIcon />,
+          type: "switch",
+        },
+        {
           // Automatically use MP when NPC casts spells
           name: "autoUseMP",
           value: autoUseMP,
-          label: t("combat_sim_auto_use_mp"),
+          label: t("combat_sim_settings_auto_use_mp"),
           icon: <AutoFixHighIcon />,
           type: "switch",
         },
@@ -123,7 +133,7 @@ const SettingsDialog = ({
           // Automatically open logs when rolling for NPCs
           name: "autoOpenLogs",
           value: autoOpenLogs,
-          label: t("combat_sim_auto_open_logs"),
+          label: t("combat_sim_settings_auto_open_logs"),
           icon: <HistoryIcon />,
           type: "switch",
         },
@@ -131,7 +141,7 @@ const SettingsDialog = ({
           // Turn on automatic save if there are unsaved changes
           name: "autosaveEnabled",
           value: autosaveEnabled,
-          label: t("combat_sim_autosave_setting_desktop"),
+          label: t("combat_sim_settings_autosave_desktop"),
           icon: <SaveAsIcon />,
           type: "switch",
         },
@@ -139,7 +149,7 @@ const SettingsDialog = ({
           // Set the autosave interval
           name: "autosaveInterval",
           value: autosaveInterval,
-          label: t("combat_sim_autosave_interval"),
+          label: t("combat_sim_settings_autosave_interval"),
           icon: <TimerIcon />,
           type: "number",
           disabled: !autosaveEnabled,
@@ -154,7 +164,7 @@ const SettingsDialog = ({
           // Use drag and drop to move items in the list
           name: "useDragAndDrop",
           value: useDragAndDrop,
-          label: t("combat_sim_use_drag_and_drop"),
+          label: t("combat_sim_settings_use_drag_and_drop"),
           icon: <DragIndicatorIcon />,
           type: "switch",
         },
@@ -162,7 +172,7 @@ const SettingsDialog = ({
           // Show a snackbar when saving changes
           name: "showSaveSnackbar",
           value: showSaveSnackbar,
-          label: t("combat_sim_show_save_snackbar"),
+          label: t("combat_sim_settings_show_save_snackbar"),
           icon: <NotificationsIcon />,
           type: "switch",
         },
@@ -170,7 +180,7 @@ const SettingsDialog = ({
           // Hide the combat logs
           name: "hideLogs",
           value: hideLogs,
-          label: t("combat_sim_log_hide"),
+          label: t("combat_sim_settings_log_hide"),
           icon: <GoLog />,
           type: "switch",
         },
@@ -178,7 +188,7 @@ const SettingsDialog = ({
           // Show the effect of base attacks in the log if the attack has it
           name: "showBaseAttackEffect",
           value: showBaseAttackEffect,
-          label: t("combat_sim_show_base_attack_effect"),
+          label: t("combat_sim_settings_show_base_attack_effect"),
           icon: <GiClawSlashes />,
           type: "switch",
         },
@@ -186,7 +196,7 @@ const SettingsDialog = ({
           // Show the effect of weapon attacks in the log if the attack has it
           name: "showWeaponAttackEffect",
           value: showWeaponAttackEffect,
-          label: t("combat_sim_show_weapon_attack_effect"),
+          label: t("combat_sim_settings_show_weapon_attack_effect"),
           icon: <PiSwordFill />,
           type: "switch",
         },
@@ -194,7 +204,7 @@ const SettingsDialog = ({
           // Show the effect of spells in the log if the spell has it
           name: "showSpellEffect",
           value: showSpellEffect,
-          label: t("combat_sim_show_spell_effect"),
+          label: t("combat_sim_settings_show_spell_effect"),
           icon: <GiBurningDot />,
           type: "switch",
         },
@@ -206,7 +216,7 @@ const SettingsDialog = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth="md"
       fullWidth
       fullScreen={isMobile}
       sx={{
@@ -274,23 +284,33 @@ const SettingsDialog = ({
                     : "rgba(0,0,0,0.03)",
                   px: 2,
                   py: 1.5,
-                  borderBottom: expandedCategories[category.key] ? `1px solid ${theme.palette.divider}` : 'none',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
+                  borderBottom: expandedCategories[category.key]
+                    ? `1px solid ${theme.palette.divider}`
+                    : "none",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  cursor: "pointer",
                 }}
                 onClick={() => toggleCategory(category.key)}
               >
                 <Typography variant="subtitle1" fontWeight="bold">
                   {category.title}
                 </Typography>
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   sx={{ p: 0.5 }}
-                  aria-label={expandedCategories[category.key] ? "collapse section" : "expand section"}
+                  aria-label={
+                    expandedCategories[category.key]
+                      ? "collapse section"
+                      : "expand section"
+                  }
                 >
-                  {expandedCategories[category.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  {expandedCategories[category.key] ? (
+                    <ExpandLessIcon />
+                  ) : (
+                    <ExpandMoreIcon />
+                  )}
                 </IconButton>
               </Box>
 

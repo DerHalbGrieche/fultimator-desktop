@@ -1012,6 +1012,24 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     document.removeEventListener("mouseup", handleMouseUp);
   };
 
+  const checkNewTurn = (npcId) => {
+    // Check if the NPC has any turns left, and if so activate the next available turn
+    const npc = selectedNPCs.find((npc) => npc.combatId === npcId);
+    if (npc) {
+      const currentTurns = [...npc.combatStats.turns];
+      
+      // Find the index of the first unused turn
+      const nextTurnIndex = currentTurns.findIndex(turn => !turn);
+      
+      // If there's an unused turn, activate only that one
+      if (nextTurnIndex !== -1) {
+        const newTurns = [...currentTurns];
+        newTurns[nextTurnIndex] = true;
+        handleUpdateNpcTurns(npc.combatId, newTurns);
+      }
+    }
+  };
+
   // During loading state
   if (loading) {
     return (
@@ -1181,6 +1199,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           addLog={addLog}
           openLogs={() => setLogOpen(true)}
           npcDetailWidth={`${npcDetailWidth}%`}
+          checkNewTurn={checkNewTurn}
         />
       </Box>
       <DamageHealDialog

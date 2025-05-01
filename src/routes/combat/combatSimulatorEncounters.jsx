@@ -75,6 +75,10 @@ const SETTINGS_CONFIG = {
     key: "combatSimShowSpellEffect",
     defaultValue: true
   },
+  autoCheckTurnAfterRoll: {
+    key: "combatSimAutoCheckTurnAfterRoll",
+    defaultValue: true
+  },
 };
 
 export default function CombatSimulatorEncounters() {
