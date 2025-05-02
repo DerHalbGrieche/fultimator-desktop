@@ -1,4 +1,3 @@
-import { Link as RouterLink } from "react-router-dom";
 import React, { useState, useEffect, useRef } from "react";
 import HelpFeedbackDialog from "../../components/appbar/HelpFeedbackDialog";
 
@@ -38,6 +37,7 @@ import Export from "../../components/Export";
 import { addPc, getPcs, deletePc } from "../../utility/db";
 import { globalConfirm } from "../../utility/globalConfirm";
 import { validateCharacter } from "../../utility/validateJson";
+import { useNavigate } from "react-router-dom";
 
 export default function PlayerGallery() {
   return (
@@ -57,6 +57,7 @@ function Personal() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fileInputRef = useRef(null);
 
@@ -262,6 +263,16 @@ function Personal() {
     setIsBugDialogOpen(false);
   };
 
+  const handleNavigation = (path) => {
+    navigate(path,
+      {
+        state: {
+          from: "/pc-gallery",
+        },
+      }
+    );
+  };
+
   return (
     <>
       <Alert
@@ -277,10 +288,21 @@ function Personal() {
         }}
       >
         <Box>
-          <AlertTitle sx={{ fontSize: "1.1rem", fontWeight: "bold", mb: 1, color: "#fff" }}>
+          <AlertTitle
+            sx={{
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              mb: 1,
+              color: "#fff",
+            }}
+          >
             {t("Help us improve the Character Designer!")}
           </AlertTitle>
-          <Typography variant="body2" color="inherit" sx={{ mb: 2, color: "#fff" }}>
+          <Typography
+            variant="body2"
+            color="inherit"
+            sx={{ mb: 2, color: "#fff" }}
+          >
             {t(
               "We value your input on this new feature. Please take a moment to complete our quick survey and share your thoughts. Your feedback will directly influence future updates and enhancements."
             )}
@@ -409,16 +431,16 @@ function Personal() {
         </Paper>
       </div>
       {loading && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 50,
-            }}
-          >
-           <CircularProgress />
-          </div>
-        )}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 50,
+          }}
+        >
+          <CircularProgress />
+        </div>
+      )}
       <Grid container spacing={1} sx={{ py: 1 }}>
         {filteredList.map((player, index) => (
           <Grid
@@ -445,8 +467,7 @@ function Personal() {
               </Tooltip>
               <Tooltip title={t("Edit")}>
                 <IconButton
-                  component={RouterLink}
-                  to={`/pc-gallery/${player.id}`}
+                  onClick={() => handleNavigation(`/pc-gallery/${player.id}`)}
                 >
                   <Edit />
                 </IconButton>
@@ -458,8 +479,7 @@ function Personal() {
               </Tooltip>
               <Tooltip title={t("Player Sheet")}>
                 <IconButton
-                  component={RouterLink}
-                  to={`/character-sheet/${player.id}`}
+                  onClick={() => handleNavigation(`/character-sheet/${player.id}`)}
                 >
                   <Badge />
                 </IconButton>

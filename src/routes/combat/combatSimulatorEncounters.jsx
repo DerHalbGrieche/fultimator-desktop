@@ -203,7 +203,11 @@ const CombatSimEncounters = () => {
   };
 
   const handleNavigateToEncounter = (id) => {
-    navigate(`/combat-sim/${id}`);
+    navigate(`/combat-sim/${id}`, {
+      state: {
+        from: "/combat-sim",
+      },
+    });
   };
 
   const handleKeyDown = (event) => {
@@ -287,41 +291,45 @@ const CombatSimEncounters = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ marginTop: 2 }}>
-  {isLoading ? (
-    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-      <CircularProgress color="primary" />
-    </Grid>
-  ) : encounters.length === 0 ? (
-    <Grid item xs={12}>
-      <Paper
-        sx={{
-          p: 3,
-          textAlign: 'center',
-          borderRadius: 2,
-          backgroundColor: theme.palette.background.paper,
-          border: `1px dashed ${theme.palette.divider}`,
-        }}
-      >
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          {t("combat_sim_no_encounters")}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("combat_sim_create_first_encounter")}
-        </Typography>
-      </Paper>
-    </Grid>
-  ) : (
-    encounters.map((encounter) => (
-      <Grid item xs={12} sm={6} md={4} key={encounter.id}>
-        <EncounterCard
-          encounter={encounter}
-          onDelete={handleDeleteEncounter}
-          onClick={() => handleNavigateToEncounter(encounter.id)}
-        />
+        {isLoading ? (
+          <Grid
+            item
+            xs={12}
+            sx={{ display: "flex", justifyContent: "center", py: 4 }}
+          >
+            <CircularProgress color="primary" />
+          </Grid>
+        ) : encounters.length === 0 ? (
+          <Grid item xs={12}>
+            <Paper
+              sx={{
+                p: 3,
+                textAlign: "center",
+                borderRadius: 2,
+                backgroundColor: theme.palette.background.paper,
+                border: `1px dashed ${theme.palette.divider}`,
+              }}
+            >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {t("combat_sim_no_encounters")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("combat_sim_create_first_encounter")}
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          encounters.map((encounter) => (
+            <Grid item xs={12} sm={6} md={4} key={encounter.id}>
+              <EncounterCard
+                encounter={encounter}
+                onDelete={handleDeleteEncounter}
+                onClick={() => handleNavigateToEncounter(encounter.id)}
+              />
+            </Grid>
+          ))
+        )}
       </Grid>
-    ))
-  )}
-</Grid>
 
       {/* Settings Dialog */}
       <SettingsDialog

@@ -58,6 +58,7 @@ const NPCDetail = ({
   openLogs,
   npcDetailWidth,
   checkNewTurn,
+  handleEditNPC
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -166,11 +167,10 @@ const NPCDetail = ({
           (selectedNPC?.combatStats?.combatNotes
             ? "【" + selectedNPC.combatStats.combatNotes + "】"
             : ""),
-            spellData.name,
+        spellData.name,
         numTargets,
         {
-          effect:
-            showSpellEffect && spellData.effect ? spellData.effect : "",
+          effect: showSpellEffect && spellData.effect ? spellData.effect : "",
           markdown: true,
         }
       );
@@ -591,37 +591,52 @@ const NPCDetail = ({
         <Box
           sx={{
             borderTop: "1px solid " + theme.palette.divider,
-            paddingTop: 1,
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: 1,
             marginBottom: 1,
+            paddingX: 3,
           }}
         >
-          <Select
-            value={selectedStudy}
-            onChange={handleStudyChange}
-            size="small"
-            sx={{
-              // when selected, change border color
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: isDarkMode ? "#fff" : "primary",
-              },
-            }}
-          >
-            <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
-            <MenuItem value={1}>10+</MenuItem>
-            <MenuItem value={2}>13+</MenuItem>
-            <MenuItem value={3}>16+</MenuItem>
-          </Select>
-          <Tooltip title="Download Sheet" placement="bottom">
-            <Button
-              color={isDarkMode ? "white" : "primary"}
-              aria-label="download"
-              onClick={downloadImage}
+          {/* Left side: Select + Download */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Select
+              value={selectedStudy}
+              onChange={handleStudyChange}
+              size="small"
+              sx={{
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: isDarkMode ? "#fff" : "primary",
+                },
+              }}
             >
-              <Download />
-            </Button>
-          </Tooltip>
+              <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
+              <MenuItem value={1}>7+</MenuItem>
+              <MenuItem value={2}>10+</MenuItem>
+              <MenuItem value={3}>13+</MenuItem>
+            </Select>
+
+            <Tooltip title="Download Sheet" placement="bottom">
+              <Button
+                color={isDarkMode ? "white" : "primary"}
+                aria-label="download"
+                onClick={downloadImage}
+              >
+                <Download />
+              </Button>
+            </Tooltip>
+          </Box>
+
+          {/* Right side: Edit button */}
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleEditNPC}
+            startIcon={<Edit />}
+          >
+            {t("Edit")}
+          </Button>
         </Box>
       )}
       {tabIndex === 2 && !isMobile && !hideLogs && (
@@ -752,35 +767,50 @@ const NPCDetail = ({
               <Box
                 sx={{
                   display: "flex",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   marginY: 1,
+                  marginX: 3,
                 }}
               >
-                <Select
-                  value={selectedStudy}
-                  onChange={handleStudyChange}
-                  size="small"
-                  sx={{
-                    // when selected, change border color
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      borderColor: isDarkMode ? "#fff" : "primary",
-                    },
-                  }}
-                >
-                  <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
-                  <MenuItem value={1}>7+</MenuItem>
-                  <MenuItem value={2}>10+</MenuItem>
-                  <MenuItem value={3}>13+</MenuItem>
-                </Select>
-                <Tooltip title="Download Sheet" placement="bottom">
-                  <Button
-                    color={isDarkMode ? "white" : "primary"}
-                    aria-label="download"
-                    onClick={downloadImage}
+                {/* Left side: Select + Download */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Select
+                    value={selectedStudy}
+                    onChange={handleStudyChange}
+                    size="small"
+                    sx={{
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: isDarkMode ? "#fff" : "primary",
+                      },
+                    }}
                   >
-                    <Download />
-                  </Button>
-                </Tooltip>
+                    <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
+                    <MenuItem value={1}>7+</MenuItem>
+                    <MenuItem value={2}>10+</MenuItem>
+                    <MenuItem value={3}>13+</MenuItem>
+                  </Select>
+
+                  <Tooltip title="Download Sheet" placement="bottom">
+                    <Button
+                      color={isDarkMode ? "white" : "primary"}
+                      aria-label="download"
+                      onClick={downloadImage}
+                    >
+                      <Download />
+                    </Button>
+                  </Tooltip>
+                </Box>
+
+                {/* Right side: Edit button */}
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleEditNPC}
+                  startIcon={<Edit />}
+                >
+                  {t("Edit")}
+                </Button>
               </Box>
             </Grid>
           )}

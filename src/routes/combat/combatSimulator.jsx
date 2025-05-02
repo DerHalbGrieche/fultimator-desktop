@@ -29,6 +29,7 @@ import CombatLog from "../../components/combatSim/CombatLog";
 import { DragHandle } from "@mui/icons-material";
 import debounce from "lodash.debounce";
 import { globalConfirm } from "../../utility/globalConfirm";
+import { useNavigate } from "react-router-dom";
 
 export default function CombatSimulator() {
   const [isDirty, setIsDirty] = useState(false);
@@ -49,6 +50,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const inputRef = useRef(null);
   const [loading, setLoading] = useState(true); // Loading state
   const [initialized, setInitialized] = useState(false); // Initialized state
+  const navigate = useNavigate();
 
   // ========== User Preferences (Local Storage) ==========
   const useDragAndDrop =
@@ -1055,6 +1057,24 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     }
   };
 
+  const handleEditNPC = async () => {
+    if (!selectedNPC) return;
+    if (isDirty) {
+      const confirm = await globalConfirm(
+        "You have unsaved changes. Are you sure you want to leave?"
+      );
+      if (!confirm) return;
+    }
+    // Navigate to the NPC editor at /npc-gallery/:npcId
+    navigate(`/npc-gallery/${selectedNPC.id}`,
+      {
+        state: {
+          from: `/combat-sim/${encounter.id}`,
+        }
+      }
+    );
+  };
+
   // During loading state
   if (loading) {
     return (
@@ -1227,6 +1247,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           openLogs={() => setLogOpen(true)}
           npcDetailWidth={`${npcDetailWidth}%`}
           checkNewTurn={checkNewTurn}
+          handleEditNPC={handleEditNPC}
         />
       </Box>
       <DamageHealDialog

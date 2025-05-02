@@ -10,7 +10,7 @@ import {
   Paper,
   useMediaQuery,
   Tooltip,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
@@ -103,7 +103,11 @@ function Home() {
               setHover("");
             }}
             onClick={() => {
-              navigate(item.link);
+              navigate(item.link, {
+                state: {
+                  from: "/",
+                },
+              });
             }}
           />
         ))}
@@ -252,7 +256,7 @@ function Home() {
                 />
                 {t("extra_resources")}
               </Typography>
-              <Stack spacing={2} >
+              <Stack spacing={2}>
                 <Typography variant="body1">
                   {t("contact_runty")}
                   <Tooltip title="Email contactrunty@iCloud.com" arrow>
