@@ -359,30 +359,45 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       prevLogsRef.current = [...(foundEncounter?.logs || [])];
       prevRoundRef.current = foundEncounter?.round;
       setLoading(false);
-
+  
       // Load NPCs using only IDs and combatIds
       const loadedNPCs = await Promise.all(
-        foundEncounter?.selectedNPCs?.map(async (npcData) => {
+        (foundEncounter?.selectedNPCs || []).map(async (npcData) => {
           const npc = await getNpc(npcData.id); // Fetch full NPC data using id
+  
+          // Calculate max HP/MP
+          const maxHp = calcHP(npc);
+          const maxMp = calcMP(npc);
+  
+          // Clamp current HP/MP to max values
+          const currentHp = Math.min(npcData.combatStats.currentHp, maxHp);
+          const currentMp = Math.min(npcData.combatStats.currentMp, maxMp);
+  
           return {
             ...npc,
             combatId: npcData.combatId,
-            combatStats: npcData.combatStats,
-          }; // Add combatId back
-        }) || []
+            combatStats: {
+              ...npcData.combatStats,
+              currentHp,
+              currentMp,
+            },
+          };
+        })
       );
+  
       setSelectedNPCs(loadedNPCs); // Set full NPC data
       setInitialized(true);
     };
-
+  
     const fetchNpcs = async () => {
       const npcs = await getNpcs();
       setNpcList(npcs);
     };
-
+  
     fetchEncounter();
     fetchNpcs();
   }, [id]);
+  
 
   // Save encounter state
   const handleSaveState = () => {
