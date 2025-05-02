@@ -48,10 +48,12 @@ const EncounterCard = ({ encounter, onDelete, onClick }) => {
         }`,
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: isDarkMode
-            ? `0 8px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px ${theme.palette.primary.dark}`
-            : `0 8px 16px rgba(0, 0, 0, 0.1), 0 0 0 1px ${theme.palette.primary.light}`,
-          borderColor: theme.palette.primary.main,
+          border: isDarkMode
+            ? `1px solid ${theme.palette.primary.dark}`
+            : `1px solid ${theme.palette.primary.light}`,
+          "& .header-box": {
+            borderTopColor: theme.palette.primary.main,
+          },
         },
         position: "relative",
         overflow: "hidden",
@@ -59,6 +61,7 @@ const EncounterCard = ({ encounter, onDelete, onClick }) => {
     >
       {/* Card header with round indicator */}
       <Box
+        className="header-box"
         sx={{
           backgroundColor: theme.palette.primary.main,
           color: theme.palette.primary.contrastText,
@@ -67,6 +70,8 @@ const EncounterCard = ({ encounter, onDelete, onClick }) => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          borderTop: `1px solid ${theme.palette.primary.main}`,
+          marginTop: "-1px", // Pull the header up to cover the gap
         }}
       >
         <Typography
@@ -120,7 +125,10 @@ const EncounterCard = ({ encounter, onDelete, onClick }) => {
             sx={{
               display: "flex",
               alignItems: "center",
-              color: theme.palette.mode === "dark" ? theme.palette.secondary.main : theme.palette.primary.main,
+              color:
+                theme.palette.mode === "dark"
+                  ? theme.palette.secondary.main
+                  : theme.palette.primary.main,
               pl: 1,
               "&:hover": { color: theme.palette.primary.dark },
             }}
