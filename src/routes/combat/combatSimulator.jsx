@@ -98,6 +98,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const [isHealing, setIsHealing] = useState(false); // Heal = true, Damage = false
   const [damageType, setDamageType] = useState(""); // Damage type
   const [isGuarding, setIsGuarding] = useState(false); // Guarding state
+  const [isIgnoreResistance, setIsIgnoreResistance] = useState(false); // Ignore resistance state
+  const [isIgnoreImmunity, setIsIgnoreImmunity] = useState(false); // Ignore immunity state
 
   const [isSaveSnackbarOpen, setIsSaveSnackbarOpen] = useState(false); // Save snackbar open
 
@@ -683,6 +685,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     setValue("");
     setDamageType("");
     setIsGuarding(false);
+    setIsIgnoreResistance(false);
+    setIsIgnoreImmunity(false);
     setOpen(true);
     setNpcClicked(npc);
 
@@ -1281,6 +1285,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         setDamageType={setDamageType}
         isGuarding={isGuarding}
         setIsGuarding={setIsGuarding}
+        isIgnoreResistance={isIgnoreResistance}
+        setIsIgnoreResistance={setIsIgnoreResistance}
+        isIgnoreImmunity={isIgnoreImmunity}
+        setIsIgnoreImmunity={setIsIgnoreImmunity}        
         inputRef={inputRef}
       />
       {/* Save Snackbar to inform user that it has been saved */}
