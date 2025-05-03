@@ -33,9 +33,10 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   CheckCircle as AutoCheckTurnIcon,
-  Delete as AskBeforeRemoveIcon,
+  Delete as AskBeforeRemoveNpcIcon,
   TimesOneMobiledata as AutoRollSpellOneTargetIcon,
   Restore as ResetDefaultsIcon,
+  AccessTime as AskBeforeRemoveClockIcon,
 } from "@mui/icons-material";
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog as HideLogsIcon } from "react-icons/go";
@@ -83,7 +84,8 @@ const SettingsDialog = ({
     showWeaponAttackEffect,
     showSpellEffect,
     autoCheckTurnAfterRoll,
-    askBeforeRemove,
+    askBeforeRemoveNpc,
+    askBeforeRemoveClock,
     autoRemoveNPCFaint,
     autoRollSpellOneTarget,
   } = settings;
@@ -177,10 +179,18 @@ const SettingsDialog = ({
         },
         {
           // Ask before removing an NPC
-          name: "askBeforeRemove",
-          value: askBeforeRemove,
+          name: "askBeforeRemoveNpc",
+          value: askBeforeRemoveNpc,
           label: t("combat_sim_settings_ask_before_remove"),
-          icon: <AskBeforeRemoveIcon />,
+          icon: <AskBeforeRemoveNpcIcon />,
+          type: "switch",
+        },
+        {
+          // Ask before removing a clock
+          name: "askBeforeRemoveClock",
+          value: askBeforeRemoveClock,
+          label: t("combat_sim_settings_ask_before_remove_clock"),
+          icon: <AskBeforeRemoveClockIcon />,
           type: "switch",
         },
         {

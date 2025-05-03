@@ -66,10 +66,12 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const showSaveSnackbar =
     localStorage.getItem("combatSimShowSaveSnackbar") === "true";
   const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
-  const askBeforeRemove =
-    localStorage.getItem("combatSimAskBeforeRemove") === "true";
+  const askBeforeRemoveNpc =
+    localStorage.getItem("combatSimAskBeforeRemoveNpc") === "true";
   const autoRemoveNPCFaint =
     localStorage.getItem("combatSimAutoRemoveNPCFaint") === "true";
+  const askBeforeRemoveClock =
+    localStorage.getItem("combatSimAskBeforeRemoveClock") === "true";
 
   // ========== Encounter States ==========
   const [encounter, setEncounter] = useState(null); // Current encounter
@@ -634,7 +636,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
 
   // Handle Remove NPC from the selected NPCs list
   const handleRemoveNPC = async (npcCombatId, isAutoRemove = false) => {
-    if (askBeforeRemove && !isAutoRemove) {
+    if (askBeforeRemoveNpc && !isAutoRemove) {
       const confirmRemove = await globalConfirm(
         t("combat_sim_remove_npc_confirm")
       );
@@ -1113,6 +1115,56 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     });
   };
 
+  const handleSaveClock = (newClock) => {
+    setEncounterClocks([...encounterClocks, newClock]);
+    addLog("combat_sim_log_clock_added", "--isClock--", {
+      name: newClock.name,
+    });
+  };
+
+  const handleUpdateClock = (index, newState) => {
+    const updatedClocks = [...encounterClocks];
+    updatedClocks[index] = {
+      ...updatedClocks[index],
+      state: newState,
+    };
+    setEncounterClocks(updatedClocks);
+    addLog("combat_sim_log_clock_updated", "--isClock--", {
+      name: updatedClocks[index].name,
+      current: newState.filter(Boolean).length,
+      max: updatedClocks[index].sections,
+    });
+  };
+
+  const handleRemoveClock = async (index) => {
+    if (askBeforeRemoveClock) {
+      const confirmRemove = await globalConfirm(
+        t("combat_sim_remove_clock_confirm")
+      );
+      if (!confirmRemove) return;
+    }
+
+    const clockName = encounterClocks[index].name;
+    setEncounterClocks(encounterClocks.filter((_, i) => i !== index));
+    addLog("combat_sim_log_clock_removed", "--isClock--", {
+      name: clockName,
+    });
+  };
+
+  const handleResetClock = (index) => {
+    const updatedClocks = [...encounterClocks];
+    updatedClocks[index] = {
+      ...updatedClocks[index],
+      state: new Array(updatedClocks[index].sections).fill(false),
+    };
+    setEncounterClocks(updatedClocks);
+    addLog("combat_sim_log_clock_reset", "--isClock--", {
+      name: updatedClocks[index].name,
+      current: updatedClocks[index].state.filter(Boolean).length,
+      max: updatedClocks[index].sections,
+    });
+  };
+
   // During loading state
   if (loading) {
     return (
@@ -1168,45 +1220,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         open={clockDialogOpen}
         onClose={() => setClockDialogOpen(false)}
         clocks={encounterClocks}
-        onSave={(newClock) => {
-          setEncounterClocks([...encounterClocks, newClock]);
-          addLog("combat_sim_log_clock_added", "--isClock--", {
-            name: newClock.name,
-          });
-        }}
-        onUpdate={(index, newState) => {
-          const updatedClocks = [...encounterClocks];
-          updatedClocks[index] = {
-            ...updatedClocks[index],
-            state: newState,
-          };
-          setEncounterClocks(updatedClocks);
-          addLog("combat_sim_log_clock_updated", "--isClock--", {
-            name: updatedClocks[index].name,
-            current: newState.filter(Boolean).length,
-            max: updatedClocks[index].sections,
-          });
-        }}
-        onRemove={(index) => {
-          const clockName = encounterClocks[index].name;
-          setEncounterClocks(encounterClocks.filter((_, i) => i !== index));
-          addLog("combat_sim_log_clock_removed", "--isClock--", {
-            name: clockName,
-          });
-        }}
-        onReset={(index) => {
-          const updatedClocks = [...encounterClocks];
-          updatedClocks[index] = {
-            ...updatedClocks[index],
-            state: new Array(updatedClocks[index].sections).fill(false),
-          };
-          setEncounterClocks(updatedClocks);
-          addLog("combat_sim_log_clock_reset", "--isClock--", {
-            name: updatedClocks[index].name,
-            current: updatedClocks[index].state.filter(Boolean).length,
-            max: updatedClocks[index].sections,
-          });
-        }}
+        onSave={(newClock) => handleSaveClock(newClock)}
+        onUpdate={(index, newState) => handleUpdateClock(index, newState)}
+        onRemove={(index) => handleRemoveClock(index)}
+        onReset={(index) => handleResetClock(index)}
         addLog={addLog}
       />
 

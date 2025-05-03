@@ -269,7 +269,7 @@ export default function CombatSimClocks({
                           </Tooltip>
                         </Box>
                         <Box sx={{ position: "absolute", left: 8, bottom: 8 }}>
-                          <Tooltip title={t("combat_sim_log_clock")}>
+                          <Tooltip title={t("combat_sim_clock_log_button")}>
                             <IconButton
                               size="small"
                               onClick = {() => logCurrentClock(index)}

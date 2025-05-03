@@ -43,8 +43,12 @@ export const SETTINGS_CONFIG = {
       key: "combatSimAutoCheckTurnAfterRoll",
       defaultValue: false,
     },
-    askBeforeRemove: {
+    askBeforeRemoveNpc: {
       key: "combatSimAskBeforeRemove",
+      defaultValue: true,
+    },
+    askBeforeRemoveClock: {
+      key: "combatSimAskBeforeRemoveClock",
       defaultValue: true,
     },
     autoRemoveNPCFaint: {
