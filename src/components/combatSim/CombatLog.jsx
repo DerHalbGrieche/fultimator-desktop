@@ -143,7 +143,11 @@ function replaceTagsWithComponents(
           return <b>{t(value2.damageType)}</b>;
         }
         if (part === "{{effect}}") {
-          return <SpanMarkdown>{typeof value2.effect === 'string' ? value2.effect : ''}</SpanMarkdown>;
+          return (
+            <SpanMarkdown>
+              {typeof value2.effect === "string" ? value2.effect : ""}
+            </SpanMarkdown>
+          );
         }
 
         // Return the part as it is if no match
@@ -181,7 +185,11 @@ function replaceTagsWithComponents(
           return <b>{value2.targets}</b>;
         }
         if (part === "{{effect}}") {
-          return <SpanMarkdown>{typeof value2.effect === 'string' ? value2.effect : ''}</SpanMarkdown>;
+          return (
+            <SpanMarkdown>
+              {typeof value2.effect === "string" ? value2.effect : ""}
+            </SpanMarkdown>
+          );
         }
 
         // Return the part as it is if no match
@@ -213,6 +221,24 @@ function replaceTagsWithComponents(
         // Return the part as it is if no match
         return part;
       });
+  } else if (value1 === "--isClock--") {
+    return t(text)
+      .split(/(\{\{.*?\}\})/)
+      .map((part) => {
+        // If the part matches the value placeholders, replace with actual values
+        if (part === "{{name}}") {
+          return <b>{value2.name}</b>; // Return value2 wrapped in <b> tags
+        }
+        if (part === "{{current}}") {
+          return <b>{value2.current}</b>; // Return value2 wrapped in <b> tags
+        }
+        if (part === "{{max}}") {
+          return <b>{value2.max}</b>; // Return value2 wrapped in <b> tags
+        }
+
+        // Return the part as it is if no match
+        return part;
+      });
   } else {
     // Use a regular expression to replace tags with the corresponding component
     return t(text)
@@ -231,7 +257,11 @@ function replaceTagsWithComponents(
         if (part === "{{value4}}") {
           // if value4 is object and markdown is true, render it as a markdown component
           if (typeof value4 === "object" && value4.markdown) {
-            return <SpanMarkdown>{typeof value4.effect === 'string' ? value4.effect : ''}</SpanMarkdown>;
+            return (
+              <SpanMarkdown>
+                {typeof value4.effect === "string" ? value4.effect : ""}
+              </SpanMarkdown>
+            );
           }
 
           return <b>{value4}</b>; // Return value4 wrapped in <b> tags
@@ -416,6 +446,12 @@ export default function CombatLog({
         value2.totalHitScore
       );
     }
+    // Handle special case for clock logs
+    else if (value1 === "--isClock--") {
+      plainText = plainText.replace(/\{\{name\}\}/g, value2.name);
+      plainText = plainText.replace(/\{\{current\}\}/g, value2.current);
+      plainText = plainText.replace(/\{\{max\}\}/g, value2.max);
+    }
     // Handle general case for other logs
     else {
       // Replace value placeholders
@@ -589,7 +625,10 @@ export default function CombatLog({
                       ? format(log.timestamp, "HH:mm:ss")
                       : format(log.timestamp, "PP HH:mm:ss")}
                   </Typography>
-                  <Tooltip title={t("combat_sim_copy_log_entry")} placement="top">
+                  <Tooltip
+                    title={t("combat_sim_copy_log_entry")}
+                    placement="top"
+                  >
                     <IconButton
                       size="small"
                       onClick={() => copyToClipboard(plainTextLog)}

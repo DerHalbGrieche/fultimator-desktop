@@ -310,7 +310,15 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     prevRoundRef.current = encounter?.round;
     prevLogsRef.current = [...logs];
     prevEncounterNameRef.current = encounterName;
-  }, [selectedNPCs, encounter, logs, encounterName, encounterClocks, initialized, setIsDirty]);
+  }, [
+    selectedNPCs,
+    encounter,
+    logs,
+    encounterName,
+    encounterClocks,
+    initialized,
+    setIsDirty,
+  ]);
 
   // Window event listener for beforeunload to prevent leaving the page with unsaved changes
   useEffect(() => {
@@ -374,20 +382,20 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       prevLogsRef.current = [...(foundEncounter?.logs || [])];
       prevRoundRef.current = foundEncounter?.round;
       setLoading(false);
-  
+
       // Load NPCs using only IDs and combatIds
       const loadedNPCs = await Promise.all(
         (foundEncounter?.selectedNPCs || []).map(async (npcData) => {
           const npc = await getNpc(npcData.id); // Fetch full NPC data using id
-  
+
           // Calculate max HP/MP
           const maxHp = calcHP(npc);
           const maxMp = calcMP(npc);
-  
+
           // Clamp current HP/MP to max values
           const currentHp = Math.min(npcData.combatStats.currentHp, maxHp);
           const currentMp = Math.min(npcData.combatStats.currentMp, maxMp);
-  
+
           return {
             ...npc,
             combatId: npcData.combatId,
@@ -399,20 +407,19 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           };
         })
       );
-  
+
       setSelectedNPCs(loadedNPCs); // Set full NPC data
       setInitialized(true);
     };
-  
+
     const fetchNpcs = async () => {
       const npcs = await getNpcs();
       setNpcList(npcs);
     };
-  
+
     fetchEncounter();
     fetchNpcs();
   }, [id]);
-  
 
   // Save encounter state
   const handleSaveState = () => {
@@ -1099,13 +1106,11 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       if (!confirm) return;
     }
     // Navigate to the NPC editor at /npc-gallery/:npcId
-    navigate(`/npc-gallery/${selectedNPC.id}`,
-      {
-        state: {
-          from: `/combat-sim/${encounter.id}`,
-        }
-      }
-    );
+    navigate(`/npc-gallery/${selectedNPC.id}`, {
+      state: {
+        from: `/combat-sim/${encounter.id}`,
+      },
+    });
   };
 
   // During loading state
@@ -1165,7 +1170,9 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         clocks={encounterClocks}
         onSave={(newClock) => {
           setEncounterClocks([...encounterClocks, newClock]);
-          addLog("combat_sim_log_clock_added", newClock.name);
+          addLog("combat_sim_log_clock_added", "--isClock--", {
+            name: newClock.name,
+          });
         }}
         onUpdate={(index, newState) => {
           const updatedClocks = [...encounterClocks];
@@ -1174,17 +1181,18 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             state: newState,
           };
           setEncounterClocks(updatedClocks);
-          addLog(
-            "combat_sim_log_clock_updated",
-            updatedClocks[index].name,
-            newState.filter(Boolean).length,
-            updatedClocks[index].sections
-          );
+          addLog("combat_sim_log_clock_updated", "--isClock--", {
+            name: updatedClocks[index].name,
+            current: newState.filter(Boolean).length,
+            max: updatedClocks[index].sections,
+          });
         }}
         onRemove={(index) => {
           const clockName = encounterClocks[index].name;
           setEncounterClocks(encounterClocks.filter((_, i) => i !== index));
-          addLog("combat_sim_log_clock_removed", clockName);
+          addLog("combat_sim_log_clock_removed", "--isClock--", {
+            name: clockName,
+          });
         }}
         onReset={(index) => {
           const updatedClocks = [...encounterClocks];
@@ -1193,8 +1201,13 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             state: new Array(updatedClocks[index].sections).fill(false),
           };
           setEncounterClocks(updatedClocks);
-          addLog("combat_sim_log_clock_reset", updatedClocks[index].name);
+          addLog("combat_sim_log_clock_reset", "--isClock--", {
+            name: updatedClocks[index].name,
+            current: updatedClocks[index].state.filter(Boolean).length,
+            max: updatedClocks[index].sections,
+          });
         }}
+        addLog={addLog}
       />
 
       {isMobile && (
@@ -1343,7 +1356,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         isIgnoreResistance={isIgnoreResistance}
         setIsIgnoreResistance={setIsIgnoreResistance}
         isIgnoreImmunity={isIgnoreImmunity}
-        setIsIgnoreImmunity={setIsIgnoreImmunity}        
+        setIsIgnoreImmunity={setIsIgnoreImmunity}
         inputRef={inputRef}
       />
       {/* Save Snackbar to inform user that it has been saved */}

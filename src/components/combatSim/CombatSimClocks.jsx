@@ -23,6 +23,7 @@ import {
   Add,
   ExpandMore,
   ExpandLess,
+  AccessTime,
 } from "@mui/icons-material";
 import Clock from "../player/playerSheet/Clock";
 import { t } from "../../translation/translate";
@@ -36,6 +37,7 @@ export default function CombatSimClocks({
   onUpdate,
   onRemove,
   onReset,
+  addLog,
 }) {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -94,6 +96,15 @@ export default function CombatSimClocks({
   const handleClose = () => {
     setExpanded(false);
     onClose();
+  };
+
+  const logCurrentClock = (index) => {
+    const clock = clocks[index];
+    addLog("combat_sim_log_clock_current_state", "--isClock--", {
+      name: clock.name,
+      current: clock.state.filter(Boolean).length,
+      max: clock.sections,
+    });
   };
 
   return (
@@ -254,6 +265,17 @@ export default function CombatSimClocks({
                               color="error"
                             >
                               <RemoveCircleOutline fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        <Box sx={{ position: "absolute", left: 8, bottom: 8 }}>
+                          <Tooltip title={t("combat_sim_log_clock")}>
+                            <IconButton
+                              size="small"
+                              onClick = {() => logCurrentClock(index)}
+                              color={isDarkMode ? "secondary" : "primary"}
+                            >
+                              <AccessTime fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </Box>
