@@ -22,6 +22,7 @@ import { calcHP, calcMP } from "../../libs/npcs";
 import SelectedNpcs from "../../components/combatSim/SelectedNpcs";
 import useDownloadImage from "../../hooks/useDownloadImage";
 import NPCDetail from "../../components/combatSim/NPCDetail";
+import CombatSimClocks from "../../components/combatSim/CombatSimClocks";
 import { typesList } from "../../libs/types";
 import { t } from "../../translation/translate";
 import DamageHealDialog from "../../components/combatSim/DamageHealDialog";
@@ -51,6 +52,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const [loading, setLoading] = useState(true); // Loading state
   const [initialized, setInitialized] = useState(false); // Initialized state
   const navigate = useNavigate();
+
+  // ========== Clock States ==========
+  const [clockDialogOpen, setClockDialogOpen] = useState(false);
+  const [encounterClocks, setEncounterClocks] = useState([]); // Store clocks for the encounter
 
   // ========== User Preferences (Local Storage) ==========
   const useDragAndDrop =
@@ -187,6 +192,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             })),
             round: encounter.round,
             logs: logs,
+            clocks: encounterClocks, // Save clocks state
           });
 
           console.log("Autosaved encounter state");
@@ -238,6 +244,12 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     // Check if logs changed
     if (prevLogsRef.current?.length !== logs?.length) {
       console.log("Logs length changed");
+      hasChanges = true;
+    }
+
+    // Check if clocks changed
+    if (JSON.stringify(encounter?.clocks) !== JSON.stringify(encounterClocks)) {
+      console.log("Clocks state changed");
       hasChanges = true;
     }
 
@@ -298,7 +310,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     prevRoundRef.current = encounter?.round;
     prevLogsRef.current = [...logs];
     prevEncounterNameRef.current = encounterName;
-  }, [selectedNPCs, encounter, logs, encounterName, initialized, setIsDirty]);
+  }, [selectedNPCs, encounter, logs, encounterName, encounterClocks, initialized, setIsDirty]);
 
   // Window event listener for beforeunload to prevent leaving the page with unsaved changes
   useEffect(() => {
@@ -354,6 +366,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       setEncounter(foundEncounter);
       setEncounterName(foundEncounter?.name || ""); // Set initial name
       setLogs(foundEncounter?.logs || []);
+      setEncounterClocks(foundEncounter?.clocks || []); // Load clocks state
       prevSelectedNpcsRef.current = JSON.parse(
         JSON.stringify(foundEncounter?.selectedNPCs || [])
       );
@@ -417,6 +430,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       })), // Only save ids and combatIds
       round: encounter.round,
       logs: logs,
+      clocks: encounterClocks, // Save clocks state
     });
 
     setIsSaveSnackbarOpen(true);
@@ -1143,6 +1157,46 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         lastAutoSaved={lastAutoSaved}
         isDirty={isDirty}
       />
+
+      {/* Clock Management Dialog */}
+      <CombatSimClocks
+        open={clockDialogOpen}
+        onClose={() => setClockDialogOpen(false)}
+        clocks={encounterClocks}
+        onSave={(newClock) => {
+          setEncounterClocks([...encounterClocks, newClock]);
+          addLog("combat_sim_log_clock_added", newClock.name);
+        }}
+        onUpdate={(index, newState) => {
+          const updatedClocks = [...encounterClocks];
+          updatedClocks[index] = {
+            ...updatedClocks[index],
+            state: newState,
+          };
+          setEncounterClocks(updatedClocks);
+          addLog(
+            "combat_sim_log_clock_updated",
+            updatedClocks[index].name,
+            newState.filter(Boolean).length,
+            updatedClocks[index].sections
+          );
+        }}
+        onRemove={(index) => {
+          const clockName = encounterClocks[index].name;
+          setEncounterClocks(encounterClocks.filter((_, i) => i !== index));
+          addLog("combat_sim_log_clock_removed", clockName);
+        }}
+        onReset={(index) => {
+          const updatedClocks = [...encounterClocks];
+          updatedClocks[index] = {
+            ...updatedClocks[index],
+            state: new Array(updatedClocks[index].sections).fill(false),
+          };
+          setEncounterClocks(updatedClocks);
+          addLog("combat_sim_log_clock_reset", updatedClocks[index].name);
+        }}
+      />
+
       {isMobile && (
         <NpcSelector // NPC Selector
           isMobile={isMobile}
@@ -1200,6 +1254,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             selectedNpcID={selectedNPC?.combatId}
             useDragAndDrop={useDragAndDrop}
             onSortEnd={handleSortEnd}
+            onClockClick={() => setClockDialogOpen(true)}
           />
           {/* Combat Log */}
           {!hideLogs && (

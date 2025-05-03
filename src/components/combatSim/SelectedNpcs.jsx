@@ -21,6 +21,7 @@ import {
   Delete,
   MoreVert,
   DragIndicator,
+  AccessTime,
 } from "@mui/icons-material";
 import { calcHP, calcMP, calcInit } from "../../libs/npcs";
 import { GiDeathSkull } from "react-icons/gi";
@@ -567,6 +568,7 @@ export default function SelectedNpcs({
   selectedNpcID,
   useDragAndDrop = true, // New prop to determine whether to use DnD or buttons
   onSortEnd = null, // New callback for reordering via DnD
+  onClockClick, // Add this prop
 }) {
   const [anchorMenu, setAnchorMenu] = useState(null);
   const [selectedNpcMenu, setSelectedNpcMenu] = useState(null);
@@ -575,6 +577,10 @@ export default function SelectedNpcs({
   const isDarkMode = theme.palette.mode === "dark";
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
+
+  const isAllTurnsChecked = selectedNPCs.every((npc) =>
+    npc.combatStats.turns.every(Boolean)
+  );
 
   const handleMenuOpen = (event, npcId) => {
     setAnchorMenu(event.currentTarget);
@@ -643,6 +649,7 @@ export default function SelectedNpcs({
 
   return (
     <>
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -651,37 +658,100 @@ export default function SelectedNpcs({
           flexShrink: 0,
           borderBottom: "1px solid #ccc",
           paddingBottom: 1,
+          gap: 1,
         }}
       >
-        <Typography variant="h5">{t("combat_sim_selected_npcs")}</Typography>
-        {selectedNPCs.length > 0 && (
-          <Typography variant="h5" color={isDarkMode ? "#fff" : primary}>
-            {t("combat_sim_npc_initiative")}: <strong>{highestInit}</strong>
-          </Typography>
-        )}
-        {isMobile ? (
-          <IconButton
-            size="small"
-            sx={{ padding: 0 }}
-            color={isDarkMode ? "#fff" : "primary"}
-            onClick={handleResetTurns}
-          >
-            <Replay />
-          </IconButton>
-        ) : (
-          <Button
-            size="small"
-            sx={{ padding: "0 0.5rem" }}
-            color={isDarkMode ? "white" : "primary"}
-            variant="outlined"
-            onClick={handleResetTurns}
-            endIcon={<Replay />}
-          >
-            {t("combat_sim_next_round")}
-          </Button>
-        )}
-      </Box>
+        {/* Left side */}
+        <Typography variant={isMobile ? "h6" : "h5"}>
+          {t("combat_sim_selected_npcs")}
+        </Typography>
 
+        {/* Center - Initiative */}
+        <Box
+          sx={{
+            display: "flex",
+            flex: 1,
+            justifyContent: "center",
+          }}
+        >
+          {selectedNPCs.length > 0 && (
+            <Typography
+              variant={isMobile ? "h6" : "h5"}
+              color={isDarkMode ? "#fff" : primary}
+            >
+              {t("combat_sim_npc_initiative")}: <strong>{highestInit}</strong>
+            </Typography>
+          )}
+        </Box>
+
+        {/* Right side - Buttons */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 2 : 1,
+          }}
+        >
+          {isMobile ? (
+            <IconButton
+              size="small"
+              sx={{
+                padding: 0.5,
+                border: `1px solid ${isDarkMode ? "#fff" : primary}`,
+                boxShadow: 3,
+              }}
+              color={isDarkMode ? "inherit" : "primary"}
+              onClick={onClockClick}
+            >
+              <AccessTime />
+            </IconButton>
+          ) : (
+            <Button
+              size="small"
+              sx={{ padding: "0 0.5rem" }}
+              color={isDarkMode ? "white" : "primary"}
+              variant="outlined"
+              onClick={onClockClick}
+              endIcon={<AccessTime />}
+            >
+              {t("clocks_section_title")}
+            </Button>
+          )}
+          {isMobile ? (
+            <IconButton
+              size="small"
+              sx={{
+                padding: 0.5,
+                border: `1px solid ${isDarkMode ? "#fff" : primary}`,
+                backgroundColor: isAllTurnsChecked ? "primary.main" : "inherit",
+                boxShadow: 3,
+              }}
+              color={
+                isAllTurnsChecked
+                  ? isDarkMode
+                    ? "inherit"
+                    : "white"
+                  : isDarkMode ? "inherit" : "primary"
+              }
+              onClick={handleResetTurns}
+            >
+              <Replay />
+            </IconButton>
+          ) : (
+            <Button
+              size="small"
+              sx={{ padding: "0 0.5rem" }}
+              color={isDarkMode && !isAllTurnsChecked ? "white" : "primary"}
+              variant={isAllTurnsChecked ? "contained" : "outlined"}
+              onClick={handleResetTurns}
+              endIcon={<Replay />}
+            >
+              {t("combat_sim_next_round")}
+            </Button>
+          )}
+        </Box>
+      </Box>
+      {/* Body */}
       <Box sx={{ flexGrow: 1, overflowY: "auto", paddingTop: 1 }}>
         {selectedNPCs.length === 0 ? (
           <Typography
