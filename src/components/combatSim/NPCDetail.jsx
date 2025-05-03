@@ -583,6 +583,7 @@ const NPCDetail = ({
             setSelectedNPC={setSelectedNPC}
             selectedNPCs={selectedNPCs}
             setSelectedNPCs={setSelectedNPCs}
+            addLog={addLog}
           />
         )}
       </Box>

@@ -253,7 +253,7 @@ const DamageHealDialog = ({
                   </Box>
                 }
               />
-              {damageType !== "" && <FormControlLabel
+              {damageType !== "" || isGuarding && <FormControlLabel
                 control={
                   <Checkbox
                     checked={isIgnoreResistance}
