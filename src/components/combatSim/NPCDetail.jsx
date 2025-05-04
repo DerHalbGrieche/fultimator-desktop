@@ -34,6 +34,7 @@ import { t } from "../../translation/translate";
 import { useTheme } from "@mui/material/styles";
 import RollsTab from "./RollsTab";
 import StandardRollsSection from "./StandardRollsSection";
+import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
 const NPCDetail = ({
   selectedNPC,
@@ -58,7 +59,7 @@ const NPCDetail = ({
   openLogs,
   npcDetailWidth,
   checkNewTurn,
-  handleEditNPC
+  handleEditNPC,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -70,17 +71,21 @@ const NPCDetail = ({
   const [error, setError] = useState("");
   const [clickedData, setClickedData] = useState({});
 
-  const autoUseMP = localStorage.getItem("combatSimAutoUseMP") === "true";
-  const autoOpenLogs = localStorage.getItem("combatSimAutoOpenLogs") === "true";
-  const showBaseAttackEffect =
-    localStorage.getItem("combatSimShowBaseAttackEffect") === "true";
-  const showWeaponAttackEffect =
-    localStorage.getItem("combatSimShowWeaponAttackEffect") === "true";
-  const showSpellEffect =
-    localStorage.getItem("combatSimShowSpellEffect") === "true";
-  const autoCheckTurnAfterRoll =
-    localStorage.getItem("combatSimAutoCheckTurnAfterRoll") === "true";
-  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
+  const {
+    autoUseMP,
+    autoOpenLogs,
+    showBaseAttackEffect,
+    showWeaponAttackEffect,
+    showSpellEffect,
+    autoCheckTurnAfterRoll,
+    hideLogs,
+    logAttack,
+    logCritFailure,
+    logCritSuccess,
+    logSpellOffensiveRoll,
+    logSpellUse,
+    logStandardRoll,
+  } = useCombatSimSettingsStore.getState().settings;
 
   if (!selectedNPC) return null;
 
@@ -119,25 +124,28 @@ const NPCDetail = ({
         isCriticalFailure,
         isCriticalSuccess,
       } = rollAttack(spellData, "spell");
-      // log the spell
-      addLog("combat_sim_log_spell_offensive_roll", "--isSpell--", {
-        npcName:
-          selectedNPC.name +
-          (selectedNPC?.combatStats?.combatNotes
-            ? "【" + selectedNPC.combatStats.combatNotes + "】"
-            : ""),
-        spellName: spellData.name,
-        targets: numTargets,
-        dice1: diceResults.attribute1,
-        dice2: diceResults.attribute2,
-        extraMagic:
-          calcMagic(selectedNPC) !== 0 ? " + " + calcMagic(selectedNPC) : "",
-        totalHitScore: totalHitScore,
-        hr: damage,
-        effect: showSpellEffect && spellData.effect ? spellData.effect : "",
-      });
 
-      if (isCriticalFailure) {
+      if (logSpellOffensiveRoll) {
+        // log the spell
+        addLog("combat_sim_log_spell_offensive_roll", "--isSpell--", {
+          npcName:
+            selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : ""),
+          spellName: spellData.name,
+          targets: numTargets,
+          dice1: diceResults.attribute1,
+          dice2: diceResults.attribute2,
+          extraMagic:
+            calcMagic(selectedNPC) !== 0 ? " + " + calcMagic(selectedNPC) : "",
+          totalHitScore: totalHitScore,
+          hr: damage,
+          effect: showSpellEffect && spellData.effect ? spellData.effect : "",
+        });
+      }
+
+      if (isCriticalFailure && logCritFailure) {
         setTimeout(() => {
           addLog(
             "combat_sim_log_crit_failure",
@@ -149,7 +157,7 @@ const NPCDetail = ({
         }, 100);
       }
 
-      if (isCriticalSuccess) {
+      if (isCriticalSuccess && logCritSuccess) {
         setTimeout(() => {
           addLog(
             "combat_sim_log_crit_success",
@@ -161,19 +169,21 @@ const NPCDetail = ({
         }, 100);
       }
     } else {
-      addLog(
-        "combat_sim_log_spell_use",
-        selectedNPC.name +
-          (selectedNPC?.combatStats?.combatNotes
-            ? "【" + selectedNPC.combatStats.combatNotes + "】"
-            : ""),
-        spellData.name,
-        numTargets,
-        {
-          effect: showSpellEffect && spellData.effect ? spellData.effect : "",
-          markdown: true,
-        }
-      );
+      if (logSpellUse) {
+        addLog(
+          "combat_sim_log_spell_use",
+          selectedNPC.name +
+            (selectedNPC?.combatStats?.combatNotes
+              ? "【" + selectedNPC.combatStats.combatNotes + "】"
+              : ""),
+          spellData.name,
+          numTargets,
+          {
+            effect: showSpellEffect && spellData.effect ? spellData.effect : "",
+            markdown: true,
+          }
+        );
+      }
     }
     if (autoOpenLogs) {
       openLogs();
@@ -203,38 +213,40 @@ const NPCDetail = ({
       isCriticalSuccess,
     } = rollAttack(attack, attackType);
 
-    // Add the attack to the log
-    addLog("combat_sim_log_attack", "--isAttack--", {
-      npcName:
-        selectedNPC.name +
-        (selectedNPC?.combatStats?.combatNotes
-          ? "【" + selectedNPC.combatStats.combatNotes + "】"
-          : ""),
-      attackName: attack.name,
-      range: attackType === "attack" ? attack.range : attack.weapon.range,
-      damageType: attackType === "attack" ? attack.type : attack.weapon.type,
-      dice1: diceResults.attribute1,
-      dice2: diceResults.attribute2,
-      prec:
-        calcPrecision(attack, selectedNPC) !== 0
-          ? " + " + calcPrecision(attack, selectedNPC)
-          : "",
-      totalHitScore,
-      hr,
-      extraDamage: calcDamage(attack, selectedNPC),
-      damage,
-      attackType,
-      effect:
-        attackType === "attack"
-          ? showBaseAttackEffect && attack.special[0]
+    if (logAttack) {
+      // Add the attack to the log
+      addLog("combat_sim_log_attack", "--isAttack--", {
+        npcName:
+          selectedNPC.name +
+          (selectedNPC?.combatStats?.combatNotes
+            ? "【" + selectedNPC.combatStats.combatNotes + "】"
+            : ""),
+        attackName: attack.name,
+        range: attackType === "attack" ? attack.range : attack.weapon.range,
+        damageType: attackType === "attack" ? attack.type : attack.weapon.type,
+        dice1: diceResults.attribute1,
+        dice2: diceResults.attribute2,
+        prec:
+          calcPrecision(attack, selectedNPC) !== 0
+            ? " + " + calcPrecision(attack, selectedNPC)
+            : "",
+        totalHitScore,
+        hr,
+        extraDamage: calcDamage(attack, selectedNPC),
+        damage,
+        attackType,
+        effect:
+          attackType === "attack"
+            ? showBaseAttackEffect && attack.special[0]
+              ? attack.special[0]
+              : ""
+            : showWeaponAttackEffect && attack.special[0]
             ? attack.special[0]
-            : ""
-          : showWeaponAttackEffect && attack.special[0]
-          ? attack.special[0]
-          : "",
-    });
+            : "",
+      });
+    }
 
-    if (isCriticalFailure) {
+    if (isCriticalFailure && logCritFailure) {
       setTimeout(() => {
         addLog(
           "combat_sim_log_crit_failure",
@@ -246,7 +258,7 @@ const NPCDetail = ({
       }, 100);
     }
 
-    if (isCriticalSuccess) {
+    if (isCriticalSuccess && logCritSuccess) {
       setTimeout(() => {
         addLog(
           "combat_sim_log_crit_success",
@@ -384,21 +396,23 @@ const NPCDetail = ({
       `Rolling ${attr1label} (${roll1}) + ${attr2label} (${roll2}) = ${totalHitScore}`
     );
 
-    // log the roll
-    addLog("combat_sim_log_standard_roll", "--isStandardRoll--", {
-      npcName:
-        selectedNPC.name +
-        (selectedNPC?.combatStats?.combatNotes
-          ? "【" + selectedNPC.combatStats.combatNotes + "】"
-          : ""),
-      dice1: roll1,
-      dice2: roll2,
-      dice1Label: attr1label,
-      dice2Label: attr2label,
-      totalHitScore,
-    });
+    if (logStandardRoll) {
+      // log the roll
+      addLog("combat_sim_log_standard_roll", "--isStandardRoll--", {
+        npcName:
+          selectedNPC.name +
+          (selectedNPC?.combatStats?.combatNotes
+            ? "【" + selectedNPC.combatStats.combatNotes + "】"
+            : ""),
+        dice1: roll1,
+        dice2: roll2,
+        dice1Label: attr1label,
+        dice2Label: attr2label,
+        totalHitScore,
+      });
+    }
 
-    if (isCriticalFailure) {
+    if (isCriticalFailure && logCritFailure) {
       setTimeout(() => {
         addLog(
           "combat_sim_log_crit_failure",
@@ -410,7 +424,7 @@ const NPCDetail = ({
       }, 100);
     }
 
-    if (isCriticalSuccess) {
+    if (isCriticalSuccess && logCritSuccess) {
       setTimeout(() => {
         addLog(
           "combat_sim_log_crit_success",

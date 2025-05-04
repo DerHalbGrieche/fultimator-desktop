@@ -29,6 +29,7 @@
     "googleapis": "^148.0.0",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.2",
+    "immer": "^10.1.1",
     "jszip": "^3.10.1",
     "lodash.debounce": "^4.0.8",
     "papaparse": "^5.5.2",
@@ -46,7 +47,8 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "semver": "^7.7.1",
-    "stream-browserify": "^3.0.0"
+    "stream-browserify": "^3.0.0",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
@@ -70,6 +72,6 @@
   "author": "Fultimator <fultimator@gmail.com>",
   "buildcounter": {
     "version": "1.0.2",
-    "count": 21
+    "count": 31
   }
 }

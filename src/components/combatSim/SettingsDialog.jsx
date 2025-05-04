@@ -18,6 +18,7 @@ import {
   TextField,
   InputAdornment,
   Collapse,
+  Divider,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { t } from "../../translation/translate";
@@ -37,6 +38,8 @@ import {
   TimesOneMobiledata as AutoRollSpellOneTargetIcon,
   Restore as ResetDefaultsIcon,
   AccessTime as AskBeforeRemoveClockIcon,
+  SelectAll as SelectAllIcon,
+  FilterAltOff as DeselectAllIcon,
 } from "@mui/icons-material";
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog as HideLogsIcon } from "react-icons/go";
@@ -45,7 +48,10 @@ import {
   GiClawSlashes as ShowBaseAttackEffectIcon,
   GiDeathSkull as AutoRemoveNPCFaintIcon,
 } from "react-icons/gi";
-import { getDefaultSettings } from "../../utility/combatSimSettings";
+import {
+  getDefaultSettings,
+  SETTINGS_CONFIG,
+} from "../../utility/combatSimSettings";
 import { globalConfirm } from "../../utility/globalConfirm";
 
 const SettingsDialog = ({
@@ -54,6 +60,7 @@ const SettingsDialog = ({
   onSave,
   settings,
   onSettingChange,
+  resetToDefaults,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -63,6 +70,7 @@ const SettingsDialog = ({
   const [expandedCategories, setExpandedCategories] = useState({
     automation: true,
     interface: true,
+    logVisibility: true,
   });
 
   const toggleCategory = (category) => {
@@ -72,23 +80,32 @@ const SettingsDialog = ({
     }));
   };
 
-  const {
-    autoUseMP,
-    autoOpenLogs,
-    useDragAndDrop,
-    autosaveEnabled,
-    autosaveInterval,
-    showSaveSnackbar,
-    hideLogs,
-    showBaseAttackEffect,
-    showWeaponAttackEffect,
-    showSpellEffect,
-    autoCheckTurnAfterRoll,
-    askBeforeRemoveNpc,
-    askBeforeRemoveClock,
-    autoRemoveNPCFaint,
-    autoRollSpellOneTarget,
-  } = settings;
+  // Extract all log-related settings from the settings object
+  const logSettings = Object.entries(settings)
+    .filter(([key]) => {
+      // Check if the setting is defined in SETTINGS_CONFIG and has category "logVisibility"
+      return (
+        SETTINGS_CONFIG[key] &&
+        SETTINGS_CONFIG[key].category === "logVisibility"
+      );
+    })
+    .map(([key, value]) => ({
+      key,
+      label: t(SETTINGS_CONFIG[key].label),
+      checked: value,
+    }));
+
+  // Handle log type toggle
+  const handleLogTypeToggle = (key) => {
+    onSettingChange(key, !settings[key]);
+  };
+
+  // Select/Deselect All logs
+  const handleSelectAll = (selectAll) => {
+    logSettings.forEach((item) => {
+      onSettingChange(item.key, selectAll);
+    });
+  };
 
   const handleSwitchChange = (name) => (event) => {
     onSettingChange(name, event.target.checked);
@@ -122,6 +139,25 @@ const SettingsDialog = ({
     const clamped = Math.min(Math.max(value, 0), 300);
     onSettingChange("autosaveInterval", clamped);
   };
+
+  // Extract non-log settings
+  const {
+    autoUseMP,
+    autoOpenLogs,
+    useDragAndDrop,
+    autosaveEnabled,
+    autosaveInterval,
+    showSaveSnackbar,
+    hideLogs,
+    showBaseAttackEffect,
+    showWeaponAttackEffect,
+    showSpellEffect,
+    autoCheckTurnAfterRoll,
+    askBeforeRemoveNpc,
+    askBeforeRemoveClock,
+    autoRemoveNPCFaint,
+    autoRollSpellOneTarget,
+  } = settings;
 
   const settingsCategories = [
     {
@@ -266,14 +302,21 @@ const SettingsDialog = ({
 
     if (!confirmReset) return;
 
+    // Reset the settings store to defaults
+    resetToDefaults();
+
     // Get default settings
     const defaultSettings = getDefaultSettings();
 
-    // Update all settings at once
+    // Update local component state to show defaults
     Object.entries(defaultSettings).forEach(([name, value]) => {
       onSettingChange(name, value);
     });
   };
+
+  // Check if all log types are selected or none are selected
+  const allSelected = logSettings.every((item) => settings[item.key]);
+  const noneSelected = logSettings.every((item) => !settings[item.key]);
 
   return (
     <Dialog
@@ -328,6 +371,7 @@ const SettingsDialog = ({
             maxHeight: isMobile ? "100%" : "60vh",
           }}
         >
+          {/* Standard settings categories */}
           {settingsCategories.map((category, categoryIndex) => (
             <Paper
               key={categoryIndex}
@@ -447,6 +491,133 @@ const SettingsDialog = ({
               </Collapse>
             </Paper>
           ))}
+
+          {/* Log Visibility Section */}
+          {!hideLogs && (
+            <Paper
+              elevation={0}
+              sx={{
+                m: 2,
+                mb: 3,
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  bgcolor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.03)",
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: expandedCategories.logVisibility
+                    ? `1px solid ${theme.palette.divider}`
+                    : "none",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() => toggleCategory("logVisibility")}
+              >
+                <Box display="flex" alignItems="center">
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {t("combat_sim_settings_log_visibility")}
+                  </Typography>
+                </Box>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  aria-label={
+                    expandedCategories.logVisibility
+                      ? "Collapse section"
+                      : "Expand section"
+                  }
+                  aria-expanded={expandedCategories.logVisibility}
+                >
+                  {expandedCategories.logVisibility ? (
+                    <ExpandLessIcon />
+                  ) : (
+                    <ExpandMoreIcon />
+                  )}
+                </IconButton>
+              </Box>
+
+              <Collapse in={expandedCategories.logVisibility}>
+                <Box sx={{ p: 2 }}>
+                  {/* Select/Deselect All buttons */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 2,
+                      flexWrap: "wrap",
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      {t("combat_sim_settings_log_visibility_desc")}
+                    </Typography>
+
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<SelectAllIcon />}
+                        onClick={() => handleSelectAll(true)}
+                        disabled={allSelected}
+                        sx={{ borderRadius: 2, textTransform: "none" }}
+                      >
+                        {t("combat_sim_settings_select_all")}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="inherit"
+                        startIcon={<DeselectAllIcon />}
+                        onClick={() => handleSelectAll(false)}
+                        disabled={noneSelected}
+                        sx={{ borderRadius: 2, textTransform: "none" }}
+                      >
+                        {t("combat_sim_settings_deselect_all")}
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {/* Log type selection */}
+                  <List sx={{ py: 0 }}>
+                    {logSettings.map((item, index) => (
+                      <ListItem
+                        key={item.key}
+                        sx={{
+                          borderBottom:
+                            index < logSettings.length - 1
+                              ? `1px solid ${theme.palette.divider}`
+                              : "none",
+                          py: 0.5,
+                        }}
+                      >
+                        <ListItemText primary={t(item.label)} />
+                        <Switch
+                          checked={settings[item.key]}
+                          onChange={() => handleLogTypeToggle(item.key)}
+                          size="medium"
+                          color="primary"
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Collapse>
+            </Paper>
+          )}
         </Box>
       </DialogContent>
 

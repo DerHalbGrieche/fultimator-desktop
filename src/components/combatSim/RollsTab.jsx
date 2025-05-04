@@ -18,12 +18,19 @@ import {
 import Diamond from "../Diamond";
 import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
 import { t } from "../../translation/translate";
+import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
-const RollsTab = ({ selectedNPC, setClickedData, setOpen, handleAttack, handleSpell }) => {
-  const hideLogs = localStorage.getItem("combatSimHideLogs") === "true";
-  const autoUseMP = localStorage.getItem("combatSimAutoUseMP") === "true";
+const RollsTab = ({
+  selectedNPC,
+  setClickedData,
+  setOpen,
+  handleAttack,
+  handleSpell,
+}) => {
+  const hideLogs = useCombatSimSettingsStore.getState().settings.hideLogs;
+  const autoUseMP = useCombatSimSettingsStore.getState().settings.autoUseMP;
   const autoRollSpellOneTarget =
-    localStorage.getItem("combatSimAutoRollSpellOneTarget") === "true";
+    useCombatSimSettingsStore.getState().settings.autoRollSpellOneTarget;
 
   const generateButtonLabel = (attack) => {
     const attributeMap = {

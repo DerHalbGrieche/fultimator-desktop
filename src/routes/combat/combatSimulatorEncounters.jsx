@@ -27,8 +27,8 @@ import SettingsDialog from "../../components/combatSim/SettingsDialog";
 import { SportsMartialArts } from "@mui/icons-material";
 import { t } from "../../translation/translate";
 import { globalConfirm } from "../../utility/globalConfirm";
-import { SETTINGS_CONFIG } from "../../utility/combatSimSettings";
 import EncounterCard from "../../components/combatSim/EncounterCard";
+import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
 const MAX_ENCOUNTERS = 100;
 
@@ -55,33 +55,13 @@ const CombatSimEncounters = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  // Initialize settings from localStorage with defaults
-  const [settings, setSettings] = useState(() => {
-    const initialSettings = {};
-
-    // Set up each setting with value from localStorage or default
-    Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
-      const storedValue = localStorage.getItem(config.key);
-
-      // Handle numeric values like autosaveInterval separately
-      if (settingName === "autosaveInterval") {
-        initialSettings[settingName] =
-          storedValue === null
-            ? config.defaultValue
-            : parseInt(storedValue, 10);
-      } else {
-        initialSettings[settingName] =
-          storedValue === null ? config.defaultValue : storedValue === "true";
-      }
-    });
-
-    return initialSettings;
-  });
+  const settingsStore = useCombatSimSettingsStore();
+  const [localSettings, setLocalSettings] = useState({});
 
   // Handler to update individual settings
   const handleSettingChange = useCallback((name, value) => {
-    setSettings((prevSettings) => ({
-      ...prevSettings,
+    setLocalSettings((prev) => ({
+      ...prev,
       [name]: value,
     }));
   }, []);
@@ -105,15 +85,18 @@ const CombatSimEncounters = () => {
 
   // Initialize settings and fetch data on mount
   useEffect(() => {
-    // Ensure default settings are in localStorage
-    Object.entries(SETTINGS_CONFIG).forEach(([config]) => {
-      if (localStorage.getItem(config.key) === null) {
-        localStorage.setItem(config.key, config.defaultValue?.toString());
-      }
-    });
+    // Check if settings exist in localStorage with getSettings
+    let persistedSettings = settingsStore.getSettings();
+    if (persistedSettings && Object.keys(persistedSettings).length > 0) {
+      setLocalSettings(persistedSettings);
+    } else if (!settingsStore.isInitialized) {
+      // Only initialize settings if not already initialized
+      settingsStore.initializeSettings();
+      setLocalSettings(settingsStore.getSettings());
+    }
 
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, settingsStore]);
 
   // Show notification helper
   const showNotification = (message, severity = "success") => {
@@ -125,40 +108,22 @@ const CombatSimEncounters = () => {
     setNotification((prev) => ({ ...prev, open: false }));
   };
 
-  // Save settings to localStorage
+  // Save settings to the persisted store
   const handleSaveSettings = useCallback(() => {
-    Object.entries(settings).forEach(([settingName, value]) => {
-      const key = SETTINGS_CONFIG[settingName]?.key;
-      if (key) {
-        localStorage.setItem(key, value.toString());
-      }
-    });
+    // Save local settings to the persisted store
+    settingsStore.updateSettings(localSettings);
 
     setSettingsOpen(false);
     showNotification(t("combat_sim_settings_saved_successfully"));
-  }, [settings]);
+  }, [localSettings, settingsStore, setSettingsOpen]);
 
   // Close settings dialog without saving changes
   const handleCloseSettings = useCallback(() => {
     setSettingsOpen(false);
 
-    // Reset settings state from localStorage on close/cancel
-    const restoredSettings = {};
-    Object.entries(SETTINGS_CONFIG).forEach(([settingName, config]) => {
-      if (settingName === "autosaveInterval") {
-        const storedValue = localStorage.getItem(config.key);
-        restoredSettings[settingName] =
-          storedValue === null
-            ? config.defaultValue
-            : parseInt(storedValue, 10);
-      } else {
-        restoredSettings[settingName] =
-          localStorage.getItem(config.key) === "true";
-      }
-    });
-
-    setSettings(restoredSettings);
-  }, []);
+    // Reset local settings to match store when the user cancels
+    setLocalSettings(settingsStore.settings);
+  }, [settingsStore.settings]);
 
   const handleEncounterNameChange = (event) => {
     setEncounterName(event.target.value);
@@ -336,8 +301,10 @@ const CombatSimEncounters = () => {
         open={settingsOpen}
         onClose={handleCloseSettings}
         onSave={handleSaveSettings}
-        settings={settings}
+        settings={localSettings}
         onSettingChange={handleSettingChange}
+        storeSettings={settingsStore.settings}
+        resetToDefaults={settingsStore.resetToDefaults}
       />
 
       {/* Notifications */}

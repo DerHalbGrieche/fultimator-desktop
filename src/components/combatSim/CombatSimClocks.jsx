@@ -28,6 +28,7 @@ import {
 import Clock from "../player/playerSheet/Clock";
 import { t } from "../../translation/translate";
 import { useTheme } from "@mui/material/styles";
+import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
 export default function CombatSimClocks({
   open,
@@ -49,6 +50,9 @@ export default function CombatSimClocks({
   const isMaxClocksReached = clocks.length >= 9;
   const isButtonDisabled = isClockNameEmpty || isMaxClocksReached;
   const shouldShowTooltip = isClockNameEmpty && !isMaxClocksReached;
+
+  const { logClockCurrentState } =
+    useCombatSimSettingsStore.getState().settings;
 
   useEffect(() => {
     if (clocks.length === 0) {
@@ -100,11 +104,13 @@ export default function CombatSimClocks({
 
   const logCurrentClock = (index) => {
     const clock = clocks[index];
-    addLog("combat_sim_log_clock_current_state", "--isClock--", {
-      name: clock.name,
-      current: clock.state.filter(Boolean).length,
-      max: clock.sections,
-    });
+    if (logClockCurrentState) {
+      addLog("combat_sim_log_clock_current_state", "--isClock--", {
+        name: clock.name,
+        current: clock.state.filter(Boolean).length,
+        max: clock.sections,
+      });
+    }
   };
 
   return (
@@ -272,7 +278,7 @@ export default function CombatSimClocks({
                           <Tooltip title={t("combat_sim_clock_log_button")}>
                             <IconButton
                               size="small"
-                              onClick = {() => logCurrentClock(index)}
+                              onClick={() => logCurrentClock(index)}
                               color={isDarkMode ? "secondary" : "primary"}
                             >
                               <AccessTime fontSize="small" />
