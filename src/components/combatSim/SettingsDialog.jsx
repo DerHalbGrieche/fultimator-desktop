@@ -427,6 +427,13 @@ const SettingsDialog = ({
                   {category.items.map((item, itemIndex) => (
                     <ListItem
                       key={itemIndex}
+                      button
+                      onClick={() => {
+                        if (item.type === "switch")
+                          handleSwitchChange(item.name)({
+                            target: { checked: !item.value },
+                          });
+                      }}
                       sx={{
                         borderBottom:
                           itemIndex < category.items.length - 1
@@ -434,6 +441,7 @@ const SettingsDialog = ({
                             : "none",
                         py: 0.5,
                         alignItems: "center",
+                        cursor: item.type === "switch" ? "pointer" : "default",
                       }}
                     >
                       <ListItemIcon sx={{ minWidth: 40 }}>
@@ -462,6 +470,7 @@ const SettingsDialog = ({
                           size="medium"
                           color="primary"
                           inputProps={{ "aria-label": item.label }}
+                          onClick={(e) => e.stopPropagation()} // prevent double toggle
                         />
                       )}
                       {item.type === "number" && (
@@ -596,12 +605,15 @@ const SettingsDialog = ({
                     {logSettings.map((item, index) => (
                       <ListItem
                         key={item.key}
+                        button
+                        onClick={() => handleLogTypeToggle(item.key)}
                         sx={{
                           borderBottom:
                             index < logSettings.length - 1
                               ? `1px solid ${theme.palette.divider}`
                               : "none",
                           py: 0.5,
+                          cursor: "pointer",
                         }}
                       >
                         <ListItemText primary={t(item.label)} />
@@ -610,6 +622,7 @@ const SettingsDialog = ({
                           onChange={() => handleLogTypeToggle(item.key)}
                           size="medium"
                           color="primary"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </ListItem>
                     ))}
