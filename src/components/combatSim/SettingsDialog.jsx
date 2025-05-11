@@ -19,6 +19,9 @@ import {
   InputAdornment,
   Collapse,
   Divider,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { t } from "../../translation/translate";
@@ -140,11 +143,16 @@ const SettingsDialog = ({
     onSettingChange("autosaveInterval", clamped);
   };
 
+  const handleSelectChange = (name) => (event) => {
+    const { value } = event.target;
+    onSettingChange(name, value);
+  };
+
   // Extract non-log settings
   const {
     autoUseMP,
     autoOpenLogs,
-    useDragAndDrop,
+    npcReorderingMethod,
     autosaveEnabled,
     autosaveInterval,
     showSaveSnackbar,
@@ -244,12 +252,21 @@ const SettingsDialog = ({
       key: "interface",
       items: [
         {
-          // Use drag and drop to move items in the list
-          name: "useDragAndDrop",
-          value: useDragAndDrop,
-          label: t("combat_sim_settings_use_drag_and_drop"),
+          name: "npcReorderingMethod",
+          value: npcReorderingMethod,
+          label: t("combat_sim_settings_npc_reordering_method"),
           icon: <UseDragAndDropIcon />,
-          type: "switch",
+          type: "select",
+          options: [
+            {
+              value: "dragAndDrop",
+              label: t("combat_sim_settings_drag_and_drop"),
+            },
+            {
+              value: "moveButtons",
+              label: t("combat_sim_settings_move_buttons"),
+            },
+          ],
         },
         {
           // Show a snackbar when saving changes
@@ -493,6 +510,28 @@ const SettingsDialog = ({
                             },
                           }}
                         />
+                      )}
+                      {item.type === "select" && (
+                        <FormControl size="small" sx={{ width: "150px" }}>
+                          <Select
+                            value={item.value}
+                            onChange={handleSelectChange(item.name)}
+                            disabled={item.disabled}
+                            sx={{
+                              minWidth: "100px",
+                              "& .MuiSelect-select": {
+                                py: 0.75,
+                              },
+                            }}
+                            displayEmpty
+                          >
+                            {item.options.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       )}
                     </ListItem>
                   ))}

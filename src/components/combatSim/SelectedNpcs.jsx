@@ -366,12 +366,12 @@ const SortableNPCItem = ({
             >
               <Button
                 variant={
-                  npc.combatStats.turns.every((turn) => turn)
+                  npc.combatStats.turns?.every((turn) => turn)
                     ? "contained"
                     : "outlined"
                 }
                 color={
-                  npc.combatStats.turns.every((turn) => turn)
+                  npc.combatStats.turns?.every((turn) => turn)
                     ? "success"
                     : "inherit"
                 }
@@ -580,8 +580,8 @@ export default function SelectedNpcs({
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
 
-  const isAllTurnsChecked = selectedNPCs.every((npc) =>
-    npc.combatStats.turns.every(Boolean)
+  const isAllTurnsChecked = selectedNPCs?.every((npc) =>
+    npc.combatStats.turns?.every(Boolean)
   );
 
   const handleMenuOpen = (event, npcId) => {
@@ -1103,12 +1103,12 @@ export default function SelectedNpcs({
                         >
                           <Button
                             variant={
-                              npc.combatStats.turns.every((turn) => turn)
+                              npc.combatStats.turns?.every((turn) => turn)
                                 ? "contained"
                                 : "outlined"
                             }
                             color={
-                              npc.combatStats.turns.every((turn) => turn)
+                              npc.combatStats.turns?.every((turn) => turn)
                                 ? "success"
                                 : "inherit"
                             }

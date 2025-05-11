@@ -138,6 +138,8 @@ const CombatSimEncounters = () => {
         round: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        clocks: [],
+        notes: [],
       };
 
       await addEncounter(newEncounter);

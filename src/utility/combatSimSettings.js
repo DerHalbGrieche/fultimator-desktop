@@ -7,9 +7,9 @@ export const SETTINGS_CONFIG = {
     key: "combatSimAutoOpenLogs",
     defaultValue: true,
   },
-  useDragAndDrop: {
-    key: "combatSimUseDragAndDrop",
-    defaultValue: true,
+  npcReorderingMethod: {
+    key: "combatSimNpcReorderingMethod",
+    defaultValue: "dragAndDrop",
   },
   autosaveEnabled: {
     key: "combatSimAutosave",

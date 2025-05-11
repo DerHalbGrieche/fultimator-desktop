@@ -62,7 +62,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   // ========== User Preferences (Zustand Storage) ==========
   const {
     // Automation / Interface settings
-    useDragAndDrop,
+    npcReorderingMethod,
     autosaveEnabled,
     autosaveInterval,
     showSaveSnackbar,
@@ -1358,7 +1358,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             handleHpMpClick={(type, npc) => handleOpen(type, npc)}
             isMobile={isMobile}
             selectedNpcID={selectedNPC?.combatId}
-            useDragAndDrop={useDragAndDrop}
+            useDragAndDrop={npcReorderingMethod === "dragAndDrop"}
             onSortEnd={handleSortEnd}
             onClockClick={() => setClockDialogOpen(true)}
             onNotesClick={() => setNotesDialogOpen(true)}
@@ -1459,7 +1459,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         onClose={() => setNotesDialogOpen(false)}
         onSave={handleNotesSave}
         notes={encounterNotes}
-        useDragAndDrop={useDragAndDrop}
+        useDragAndDrop={npcReorderingMethod === "dragAndDrop"}
         //maxNotesCount={5} // unlimited in desktop version
         //maxNoteLength={500} // unlimited in desktop version
       />
