@@ -22,6 +22,7 @@ import {
   MoreVert,
   DragIndicator,
   AccessTime,
+  Notes,
 } from "@mui/icons-material";
 import { calcHP, calcMP, calcInit } from "../../libs/npcs";
 import { GiDeathSkull } from "react-icons/gi";
@@ -566,9 +567,10 @@ export default function SelectedNpcs({
   handleHpMpClick,
   isMobile,
   selectedNpcID,
-  useDragAndDrop = true, // New prop to determine whether to use DnD or buttons
-  onSortEnd = null, // New callback for reordering via DnD
-  onClockClick, // Add this prop
+  useDragAndDrop = true,
+  onSortEnd = null,
+  onClockClick,
+  onNotesClick,
 }) {
   const [anchorMenu, setAnchorMenu] = useState(null);
   const [selectedNpcMenu, setSelectedNpcMenu] = useState(null);
@@ -662,16 +664,18 @@ export default function SelectedNpcs({
         }}
       >
         {/* Left side */}
-        <Typography variant={isMobile ? "h6" : "h5"}>
-          {t("combat_sim_selected_npcs")}
-        </Typography>
+        {!isMobile && (
+          <Typography variant={"h5"}>
+            {t("combat_sim_selected_npcs")}
+          </Typography>
+        )}
 
         {/* Center - Initiative */}
         <Box
           sx={{
             display: "flex",
             flex: 1,
-            justifyContent: "center",
+            justifyContent: isMobile ? "left" : "center",
           }}
         >
           {selectedNPCs.length > 0 && (
@@ -692,6 +696,31 @@ export default function SelectedNpcs({
             gap: isMobile ? 2 : 1,
           }}
         >
+          {isMobile ? (
+            <IconButton
+              size="small"
+              sx={{
+                padding: 0.5,
+                border: `1px solid ${isDarkMode ? "#fff" : primary}`,
+                boxShadow: 3,
+              }}
+              color={isDarkMode ? "inherit" : "primary"}
+              onClick={onNotesClick}
+            >
+              <Notes />
+            </IconButton>
+          ) : (
+            <Button
+              size="small"
+              sx={{ padding: "0 0.5rem" }}
+              color={isDarkMode ? "white" : "primary"}
+              variant="outlined"
+              onClick={onNotesClick}
+              endIcon={<Notes />}
+            >
+              {t("combat_sim_notes_button")}
+            </Button>
+          )}
           {isMobile ? (
             <IconButton
               size="small"
@@ -731,7 +760,9 @@ export default function SelectedNpcs({
                   ? isDarkMode
                     ? "inherit"
                     : "white"
-                  : isDarkMode ? "inherit" : "primary"
+                  : isDarkMode
+                  ? "inherit"
+                  : "primary"
               }
               onClick={handleResetTurns}
             >

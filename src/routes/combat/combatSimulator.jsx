@@ -32,6 +32,7 @@ import debounce from "lodash.debounce";
 import { globalConfirm } from "../../utility/globalConfirm";
 import { useNavigate } from "react-router-dom";
 import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
+import GeneralNotesDialog from "../../components/combatSim/GeneralNotesDialog";
 
 export default function CombatSimulator() {
   const [isDirty, setIsDirty] = useState(false);
@@ -104,6 +105,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const [npcDrawerOpen, setNpcDrawerOpen] = useState(false); // NPC Drawer open (mobile)
   const [lastSaved, setLastSaved] = useState(null); // Last saved time
   const [lastAutoSaved, setLastAutoSaved] = useState(null); // Last auto-saved time
+  const [encounterNotes, setEncounterNotes] = useState([]); // Encounter notes
 
   // ========== UI Interaction States ==========
   const [npcDetailWidth, setNpcDetailWidth] = useState(30); // NPC detail width (%)
@@ -114,10 +116,13 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const prevRoundRef = useRef(null);
   const prevLogsRef = useRef(null);
   const prevEncounterNameRef = useRef(null);
+  const prevEncounterNotesRef = useRef(null);
 
   const [anchorEl, setAnchorEl] = useState(null); // Turns popover anchor
   const [popoverNpcId, setPopoverNpcId] = useState(null); // Popover NPC ID
   const [tabIndex, setTabIndex] = useState(0); // NPC sheet/stats/rolls/notes tab index
+
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false); // Notes dialog open
 
   const [open, setOpen] = useState(false); // HP/MP dialog open
   const [statType, setStatType] = useState(null); // "HP" or "MP"
@@ -215,6 +220,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             round: encounter.round,
             logs: logs,
             clocks: encounterClocks, // Save clocks state
+            notes: encounterNotes, // Save notes state
           });
 
           console.log("Autosaved encounter state");
@@ -235,6 +241,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       prevRoundRef.current = encounter?.round;
       prevLogsRef.current = logs;
       prevEncounterNameRef.current = encounterName;
+      prevEncounterNotesRef.current = encounterNotes;
       return;
     }
 
@@ -272,6 +279,12 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     // Check if clocks changed
     if (JSON.stringify(encounter?.clocks) !== JSON.stringify(encounterClocks)) {
       console.log("Clocks state changed");
+      hasChanges = true;
+    }
+
+    // Check if notes changed
+    if (JSON.stringify(encounter?.notes) !== JSON.stringify(encounterNotes)) {
+      console.log("Notes state changed");
       hasChanges = true;
     }
 
@@ -338,6 +351,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     logs,
     encounterName,
     encounterClocks,
+    encounterNotes,
     initialized,
     setIsDirty,
   ]);
@@ -397,12 +411,14 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       setEncounterName(foundEncounter?.name || ""); // Set initial name
       setLogs(foundEncounter?.logs || []);
       setEncounterClocks(foundEncounter?.clocks || []); // Load clocks state
+      setEncounterNotes(foundEncounter?.notes || []); // Load notes state
       prevSelectedNpcsRef.current = JSON.parse(
         JSON.stringify(foundEncounter?.selectedNPCs || [])
       );
       prevEncounterNameRef.current = foundEncounter?.name || "";
       prevLogsRef.current = [...(foundEncounter?.logs || [])];
       prevRoundRef.current = foundEncounter?.round;
+      prevEncounterNotesRef.current = foundEncounter?.notes || [];
       setLoading(false);
 
       // Load NPCs using only IDs and combatIds
@@ -457,9 +473,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         combatId: npc.combatId,
         combatStats: npc.combatStats,
       })), // Only save ids and combatIds
-      round: encounter.round,
-      logs: logs,
+      round: encounter.round, // Save round state
+      logs: logs, // Save logs state
       clocks: encounterClocks, // Save clocks state
+      notes: encounterNotes, // Save notes state
     });
 
     setIsSaveSnackbarOpen(true);
@@ -476,6 +493,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
       round: encounter.round,
       lastSaved: currentTime,
       logs: logs,
+      clocks: encounterClocks, 
+      notes: encounterNotes,
     });
   };
 
@@ -1218,6 +1237,10 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     }
   };
 
+  const handleNotesSave = (newNotes) => {
+    setEncounterNotes(newNotes);
+  };
+
   // During loading state
   if (loading) {
     return (
@@ -1322,8 +1345,8 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           <SelectedNpcs
             selectedNPCs={selectedNPCs}
             handleResetTurns={handleResetTurns}
-            handleMoveUp={handleMoveUp} // Keep for backward compatibility if needed
-            handleMoveDown={handleMoveDown} // Keep for backward compatibility if needed
+            handleMoveUp={handleMoveUp}
+            handleMoveDown={handleMoveDown}
             handleRemoveNPC={handleRemoveNPC}
             handleUpdateNpcTurns={handleUpdateNpcTurns}
             handlePopoverOpen={handlePopoverOpen}
@@ -1338,6 +1361,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
             useDragAndDrop={useDragAndDrop}
             onSortEnd={handleSortEnd}
             onClockClick={() => setClockDialogOpen(true)}
+            onNotesClick={() => setNotesDialogOpen(true)}
           />
           {/* Combat Log */}
           {!hideLogs && (
@@ -1428,6 +1452,16 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         isIgnoreImmunity={isIgnoreImmunity}
         setIsIgnoreImmunity={setIsIgnoreImmunity}
         inputRef={inputRef}
+      />
+      {/* Notes Dialog */}
+      <GeneralNotesDialog
+        open={notesDialogOpen}
+        onClose={() => setNotesDialogOpen(false)}
+        onSave={handleNotesSave}
+        notes={encounterNotes}
+        useDragAndDrop={useDragAndDrop}
+        //maxNotesCount={5} // unlimited in desktop version
+        //maxNoteLength={500} // unlimited in desktop version
       />
       {/* Save Snackbar to inform user that it has been saved */}
       {showSaveSnackbar && (
