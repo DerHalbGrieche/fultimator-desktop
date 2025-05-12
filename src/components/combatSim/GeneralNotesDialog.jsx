@@ -57,6 +57,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
+import { NoteAlt } from "@mui/icons-material";
 
 // Available note colors
 const NOTE_COLORS = {
@@ -238,7 +239,7 @@ const NoteItem = ({
           </Box>
         )}
 
-        <Tooltip title={expanded ? t("notes_collapse") : t("notes_expand")}>
+        <Tooltip title={expanded ? t("Collapse") : t("Expand")}>
           <IconButton
             size="small"
             onClick={() => setExpanded(!expanded)}
@@ -571,113 +572,157 @@ export default function GeneralNotesDialog({
       </DialogTitle>
 
       <DialogContent sx={{ pt: 3, pb: 1, mt: 1 }}>
-        {/* Header controls section - optimized for mobile */}
-        <Box
-          sx={{
-            mb: 3,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {/* Left section with view/edit toggles - icons only on mobile */}
-          <ToggleButtonGroup
-            value={viewMode ? "view" : "edit"}
-            exclusive
-            onChange={handleModeChange}
-            aria-label="view or edit mode"
-            size="small"
-          >
-            <ToggleButton value="view" aria-label="view mode">
-              <Visibility sx={{ mr: isSmallScreen ? 0 : 0.5 }} />
-              {!isSmallScreen && t("notes_view_button")}
-            </ToggleButton>
-            <ToggleButton value="edit" aria-label="edit mode">
-              <Edit sx={{ mr: isSmallScreen ? 0 : 0.5 }} />
-              {!isSmallScreen && t("notes_edit_button")}
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          {/* Right section with note count, compact mode toggle and add button */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {maxNotesCount && (
-              <Chip
-                label={`${notes.length}/${maxNotesCount}`}
-                color={notes.length >= maxNotesCount ? "warning" : "default"}
+        {notes.length > 0 ? (
+          <>
+            {/* Header controls section - optimized for mobile */}
+            <Box
+              sx={{
+                mb: 3,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {/* Left section with view/edit toggles - icons only on mobile */}
+              <ToggleButtonGroup
+                value={viewMode ? "view" : "edit"}
+                exclusive
+                onChange={handleModeChange}
+                aria-label="view or edit mode"
                 size="small"
-                variant="outlined"
-                sx={{
-                  ml: !viewMode || notes.length === 0 ? 0 : "auto",
-                }}
-              />
-            )}
-
-            {!viewMode && notes.length > 3 && (
-              <Tooltip
-                title={
-                  compactMode ? t("notes_expand_all") : t("notes_collapse_all")
-                }
               >
-                <IconButton onClick={toggleCompactMode} size="small">
-                  <ViewHeadline fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
+                <ToggleButton value="view" aria-label="view mode">
+                  <Visibility sx={{ mr: isSmallScreen ? 0 : 0.5 }} />
+                  {!isSmallScreen && t("notes_view_button")}
+                </ToggleButton>
+                <ToggleButton value="edit" aria-label="edit mode">
+                  <Edit sx={{ mr: isSmallScreen ? 0 : 0.5 }} />
+                  {!isSmallScreen && t("notes_edit_button")}
+                </ToggleButton>
+              </ToggleButtonGroup>
 
+              {/* Right section with note count, compact mode toggle and add button */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {maxNotesCount && (
+                  <Chip
+                    label={`${notes.length}/${maxNotesCount}`}
+                    color={
+                      notes.length >= maxNotesCount ? "warning" : "default"
+                    }
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      ml: !viewMode || notes.length === 0 ? 0 : "auto",
+                    }}
+                  />
+                )}
+
+                {!viewMode && notes.length > 3 && (
+                  <Tooltip
+                    title={
+                      compactMode
+                        ? t("notes_expand_all")
+                        : t("notes_collapse_all")
+                    }
+                  >
+                    <IconButton onClick={toggleCompactMode} size="small">
+                      <ViewHeadline fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={isSmallScreen ? null : <Add />}
+                  onClick={addNote}
+                  disabled={
+                    maxNotesCount !== null && notes.length >= maxNotesCount
+                  }
+                  size={isSmallScreen ? "small" : "medium"}
+                >
+                  {isSmallScreen ? <Add /> : t("notes_create_new")}
+                </Button>
+              </Box>
+            </Box>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+              disabled={viewMode}
+            >
+              <SortableContext
+                items={notes.map((note) => note.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <Box
+                  sx={{
+                    mt: 2,
+                    maxHeight: isMobile ? "calc(100vh - 200px)" : "55vh",
+                    overflowY: "auto",
+                    pr: 1,
+                    pl: 0.5,
+                  }}
+                >
+                  {notes.map((note, index) => (
+                    <NoteItem
+                      key={note.id}
+                      id={note.id}
+                      note={note}
+                      updateNote={updateNote}
+                      deleteNote={deleteNote}
+                      moveNote={moveNote}
+                      index={index}
+                      totalNotes={notes.length}
+                      maxNoteLength={maxNoteLength}
+                      isDarkMode={isDarkMode}
+                      useDragAndDrop={useDragAndDrop && !viewMode}
+                      isViewMode={viewMode}
+                      compactMode={compactMode && !viewMode}
+                      isMobile={isMobile}
+                    />
+                  ))}
+                </Box>
+              </SortableContext>
+            </DndContext>
+          </>
+        ) : (
+          // Empty state component when there are no notes
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: isMobile ? "calc(100vh - 200px)" : "40vh",
+              textAlign: "center",
+              p: 3,
+              gap: 2,
+            }}
+          >
+            <NoteAlt
+              sx={{
+                fontSize: 80,
+                color: "text.secondary",
+                opacity: 0.6,
+              }}
+            />
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              {t("notes_empty_state")}
+            </Typography>
             <Button
               variant="contained"
               color="primary"
-              startIcon={isSmallScreen ? null : <Add />}
+              startIcon={<Add />}
               onClick={addNote}
-              disabled={maxNotesCount !== null && notes.length >= maxNotesCount}
-              size={isSmallScreen ? "small" : "medium"}
+              size="large"
             >
-              {isSmallScreen ? <Add /> : t("notes_create_new")}
+              {t("notes_create_new")}
             </Button>
           </Box>
-        </Box>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToVerticalAxis]}
-          disabled={viewMode}
-        >
-          <SortableContext
-            items={notes.map((note) => note.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <Box
-              sx={{
-                mt: 2,
-                maxHeight: isMobile ? "calc(100vh - 200px)" : "55vh",
-                overflowY: "auto",
-                pr: 1,
-                pl: 0.5,
-              }}
-            >
-              {notes.map((note, index) => (
-                <NoteItem
-                  key={note.id}
-                  id={note.id}
-                  note={note}
-                  updateNote={updateNote}
-                  deleteNote={deleteNote}
-                  moveNote={moveNote}
-                  index={index}
-                  totalNotes={notes.length}
-                  maxNoteLength={maxNoteLength}
-                  isDarkMode={isDarkMode}
-                  useDragAndDrop={useDragAndDrop && !viewMode}
-                  isViewMode={viewMode}
-                  compactMode={compactMode && !viewMode}
-                  isMobile={isMobile}
-                />
-              ))}
-            </Box>
-          </SortableContext>
-        </DndContext>
+        )}
       </DialogContent>
 
       <DialogActions
