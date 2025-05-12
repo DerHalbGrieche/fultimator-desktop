@@ -11,6 +11,10 @@ export const SETTINGS_CONFIG = {
     key: "combatSimNpcReorderingMethod",
     defaultValue: "dragAndDrop",
   },
+  noteReorderingMethod: {
+    key: "combatSimNoteReorderingMethod",
+    defaultValue: "dragAndDrop",
+  },
   autosaveEnabled: {
     key: "combatSimAutosave",
     defaultValue: false,

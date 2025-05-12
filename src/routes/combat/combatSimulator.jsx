@@ -63,6 +63,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
   const {
     // Automation / Interface settings
     npcReorderingMethod,
+    noteReorderingMethod,
     autosaveEnabled,
     autosaveInterval,
     showSaveSnackbar,
@@ -1459,7 +1460,7 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         onClose={() => setNotesDialogOpen(false)}
         onSave={handleNotesSave}
         notes={encounterNotes}
-        useDragAndDrop={npcReorderingMethod === "dragAndDrop"}
+        useDragAndDrop={noteReorderingMethod === "dragAndDrop"}
         //maxNotesCount={5} // unlimited in desktop version
         //maxNoteLength={500} // unlimited in desktop version
       />

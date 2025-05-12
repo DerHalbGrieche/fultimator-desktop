@@ -153,6 +153,7 @@ const SettingsDialog = ({
     autoUseMP,
     autoOpenLogs,
     npcReorderingMethod,
+    noteReorderingMethod,
     autosaveEnabled,
     autosaveInterval,
     showSaveSnackbar,
@@ -252,9 +253,28 @@ const SettingsDialog = ({
       key: "interface",
       items: [
         {
+          // Method used to reorder NPCs
           name: "npcReorderingMethod",
           value: npcReorderingMethod,
           label: t("combat_sim_settings_npc_reordering_method"),
+          icon: <UseDragAndDropIcon />,
+          type: "select",
+          options: [
+            {
+              value: "dragAndDrop",
+              label: t("combat_sim_settings_drag_and_drop"),
+            },
+            {
+              value: "moveButtons",
+              label: t("combat_sim_settings_move_buttons"),
+            },
+          ],
+        },
+        {
+          // Method used to reorder notes
+          name: "noteReorderingMethod",
+          value: noteReorderingMethod,
+          label: t("combat_sim_settings_note_reordering_method"),
           icon: <UseDragAndDropIcon />,
           type: "select",
           options: [
