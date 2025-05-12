@@ -26,14 +26,14 @@ import {
   Download,
 } from "@mui/icons-material";
 import NpcPretty from "../npc/Pretty";
-import StatsTab from "./StatsTab";
-import NotesTab from "./NotesTab";
-import AttributeSection from "./AttributeSection";
+import StatsTab from "./npcDetail/StatsTab";
+import NotesTab from "./npcDetail/NotesTab";
+import AttributeSection from "./npcDetail/AttributeSection";
 import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
 import { t } from "../../translation/translate";
 import { useTheme } from "@mui/material/styles";
-import RollsTab from "./RollsTab";
-import StandardRollsSection from "./StandardRollsSection";
+import RollsTab from "./npcDetail/RollsTab";
+import StandardRollsSection from "./npcDetail/StandardRollsSection";
 import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
 const NPCDetail = ({

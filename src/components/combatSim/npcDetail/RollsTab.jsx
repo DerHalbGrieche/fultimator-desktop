@@ -14,11 +14,11 @@ import {
   MeleeIcon,
   OffensiveSpellIcon,
   SpellIcon,
-} from "../icons.jsx";
-import Diamond from "../Diamond";
-import { calcPrecision, calcDamage, calcMagic } from "../../libs/npcs";
-import { t } from "../../translation/translate";
-import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
+} from "../../icons.jsx";
+import Diamond from "../../Diamond.jsx";
+import { calcPrecision, calcDamage, calcMagic } from "../../../libs/npcs.js";
+import { t } from "../../../translation/translate.jsx";
+import { useCombatSimSettingsStore } from "../../../stores/combatSimSettingsStore.js";
 
 const RollsTab = ({
   selectedNPC,

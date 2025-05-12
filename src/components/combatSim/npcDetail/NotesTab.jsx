@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { TextField, Button } from "@mui/material";
 import { Send } from "@mui/icons-material";
-import { t } from "../../translation/translate";
+import { t } from "../../../translation/translate";
 
 const NotesTab = ({
   selectedNPC,

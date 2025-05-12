@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, MenuItem, Select } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Casino } from "@mui/icons-material";
-import { t } from "../../translation/translate";
+import { t } from "../../../translation/translate";
 
 const StandardRollsSection = ({ selectedNPC, calcAttr, handleRoll }) => {
   const theme = useTheme();
