@@ -63,6 +63,10 @@ export const SETTINGS_CONFIG = {
     key: "combatSimAutoRollSpellOneTarget",
     defaultValue: false,
   },
+  studyValues: {
+    key: "combatSimStudyValues",
+    defaultValue: "default",
+  },
 
   // Log types
   logEncounterNameUpdated: {

@@ -85,7 +85,10 @@ const NPCDetail = ({
     logSpellOffensiveRoll,
     logSpellUse,
     logStandardRoll,
+    studyValues,
   } = useCombatSimSettingsStore.getState().settings;
+
+  console.log(studyValues);
 
   if (!selectedNPC) return null;
 
@@ -627,9 +630,15 @@ const NPCDetail = ({
               }}
             >
               <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
-              <MenuItem value={1}>7+</MenuItem>
-              <MenuItem value={2}>10+</MenuItem>
-              <MenuItem value={3}>13+</MenuItem>
+              <MenuItem value={1}>
+                {studyValues === "default" ? "10+" : "7+"}
+              </MenuItem>
+              <MenuItem value={2}>
+                {studyValues === "default" ? "13+" : "10+"}
+              </MenuItem>
+              <MenuItem value={3}>
+                {studyValues === "default" ? "16+" : "13+"}
+              </MenuItem>
             </Select>
 
             <Tooltip title="Download Sheet" placement="bottom">
@@ -801,9 +810,15 @@ const NPCDetail = ({
                     }}
                   >
                     <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
-                    <MenuItem value={1}>7+</MenuItem>
-                    <MenuItem value={2}>10+</MenuItem>
-                    <MenuItem value={3}>13+</MenuItem>
+                    <MenuItem value={1}>
+                      {studyValues === "default" ? "10+" : "7+"}
+                    </MenuItem>
+                    <MenuItem value={2}>
+                      {studyValues === "default" ? "13+" : "10+"}
+                    </MenuItem>
+                    <MenuItem value={3}>
+                      {studyValues === "default" ? "16+" : "13+"}
+                    </MenuItem>
                   </Select>
 
                   <Tooltip title="Download Sheet" placement="bottom">

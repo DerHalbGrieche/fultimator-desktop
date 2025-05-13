@@ -43,6 +43,7 @@ import {
   AccessTime as AskBeforeRemoveClockIcon,
   SelectAll as SelectAllIcon,
   FilterAltOff as DeselectAllIcon,
+  School as StudyValuesIcon,
 } from "@mui/icons-material";
 import { PiSwordFill } from "react-icons/pi";
 import { GoLog as HideLogsIcon } from "react-icons/go";
@@ -166,6 +167,7 @@ const SettingsDialog = ({
     askBeforeRemoveClock,
     autoRemoveNPCFaint,
     autoRollSpellOneTarget,
+    studyValues,
   } = settings;
 
   const settingsCategories = [
@@ -328,6 +330,24 @@ const SettingsDialog = ({
           icon: <ShowSpellEffectIcon />,
           type: "switch",
         },
+        {
+          // Study values
+          name: "studyValues",
+          value: studyValues,
+          label: t("combat_sim_settings_study_values"),
+          icon: <StudyValuesIcon />,
+          type: "select",
+          options: [
+            {
+              value: "default",
+              label: t("combat_sim_settings_study_values_default"),
+            },
+            {
+              value: "playtest",
+              label: t("combat_sim_settings_study_values_playtest"),
+            },
+          ],
+        }
       ],
     },
   ];
