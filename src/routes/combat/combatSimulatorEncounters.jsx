@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
   TextField,
   Grid,
   Box,
-  Card,
-  CardContent,
   Typography,
   IconButton,
   Paper,
-  CardActions,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Checkbox,
-  FormControlLabel,
+  Snackbar,
+  Alert,
+  Fade,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,13 +19,16 @@ import {
   addEncounter,
   deleteEncounter,
 } from "../../utility/db";
-import DeleteIcon from "@mui/icons-material/Delete";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Layout from "../../components/Layout";
 import { useTheme } from "@mui/material/styles";
 import CustomHeaderAlt from "../../components/common/CustomHeaderAlt";
-import { SportsMartialArts, NavigateNext } from "@mui/icons-material";
+import SettingsDialog from "../../components/combatSim/SettingsDialog";
+import { SportsMartialArts } from "@mui/icons-material";
 import { t } from "../../translation/translate";
+import { globalConfirm } from "../../utility/globalConfirm";
+import EncounterCard from "../../components/combatSim/EncounterCard";
+import { useCombatSimSettingsStore } from "../../stores/combatSimSettingsStore";
 
 const MAX_ENCOUNTERS = 100;
 
@@ -45,81 +43,144 @@ export default function CombatSimulatorEncounters() {
 const CombatSimEncounters = () => {
   const [encounters, setEncounters] = useState([]);
   const [encounterName, setEncounterName] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false); // State for settings dialog
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  const [autoUseMP, setAutoUseMP] = useState(() => {
-    const storedSetting = localStorage.getItem("combatSimAutoUseMP");
-    return storedSetting === null ? true : storedSetting === "true";
-  });
+  const settingsStore = useCombatSimSettingsStore();
+  const [localSettings, setLocalSettings] = useState({});
 
-  const [autoOpenLogs, setAutoOpenLogs] = useState(() => {
-    const storedSetting = localStorage.getItem("combatSimAutoOpenLogs");
-    return storedSetting === null ? true : storedSetting === "true";
-  });
+  // Handler to update individual settings
+  const handleSettingChange = useCallback((name, value) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
 
-  useEffect(() => {
-    const storedSetting = localStorage.getItem("combatSimAutoUseMP");
-    if (storedSetting === null) {
-      localStorage.setItem("combatSimAutoUseMP", "true"); // Set default value in localStorage
-    }
-
-    const storedSetting2 = localStorage.getItem("combatSimAutoOpenLogs");
-    if (storedSetting2 === null) {
-      localStorage.setItem("combatSimAutoOpenLogs", "true"); // Set default value in localStorage
+  // Fetch encounters data
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const encounterList = await getEncounterList();
+      encounterList.sort(
+        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+      );
+      setEncounters(encounterList);
+    } catch (error) {
+      console.error("Error fetching encounters:", error);
+      showNotification("Failed to load encounters", "error");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
+  // Initialize settings and fetch data on mount
   useEffect(() => {
+    // Check if settings exist in localStorage with getSettings
+    let persistedSettings = settingsStore.getSettings();
+    if (persistedSettings && Object.keys(persistedSettings).length > 0) {
+      setLocalSettings(persistedSettings);
+    } else if (!settingsStore.isInitialized) {
+      // Only initialize settings if not already initialized
+      settingsStore.initializeSettings();
+      setLocalSettings(settingsStore.getSettings());
+    }
+
     fetchData();
-  }, []);
+  }, [fetchData, settingsStore]);
 
-  const handleSaveSettings = () => {
-    localStorage.setItem("combatSimAutoUseMP", autoUseMP);
-    localStorage.setItem("combatSimAutoOpenLogs", autoOpenLogs);
+  // Show notification helper
+  const showNotification = (message, severity = "success") => {
+    setNotification({ open: true, message, severity });
+  };
+
+  // Handle notification close
+  const handleNotificationClose = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
+  };
+
+  // Save settings to the persisted store
+  const handleSaveSettings = useCallback(() => {
+    // Save local settings to the persisted store
+    settingsStore.updateSettings(localSettings);
+
     setSettingsOpen(false);
-  };
+    showNotification(t("combat_sim_settings_saved_successfully"));
+  }, [localSettings, settingsStore, setSettingsOpen]);
 
-  const handleCloseSettings = () => {
+  // Close settings dialog without saving changes
+  const handleCloseSettings = useCallback(() => {
     setSettingsOpen(false);
-    setAutoUseMP(localStorage.getItem("combatSimAutoUseMP") === "true");
-    setAutoOpenLogs(localStorage.getItem("combatSimAutoOpenLogs") === "true");
-  };
 
-  const fetchData = async () => {
-    const encounterList = await getEncounterList();
-    encounterList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    setEncounters(encounterList);
-  };
+    // Reset local settings to match store when the user cancels
+    setLocalSettings(settingsStore.settings);
+  }, [settingsStore.settings]);
 
   const handleEncounterNameChange = (event) => {
     setEncounterName(event.target.value);
   };
 
   const handleSaveEncounter = async () => {
-    if (!encounterName || encounters.length >= MAX_ENCOUNTERS) return;
+    if (!encounterName.trim() || encounters.length >= MAX_ENCOUNTERS) return;
 
-    const newEncounter = {
-      name: encounterName,
-      round: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const newEncounter = {
+        name: encounterName.trim(),
+        round: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        clocks: [],
+        notes: [],
+      };
 
-    await addEncounter(newEncounter);
-    fetchData();
-    setEncounterName("");
+      await addEncounter(newEncounter);
+      await fetchData();
+      setEncounterName("");
+      showNotification(t("combat_sim_encounter_created"));
+    } catch (error) {
+      console.error("Error saving encounter:", error);
+      showNotification(t("combat_sim_error_creating_encounter"), "error");
+    }
   };
 
   const handleDeleteEncounter = async (id) => {
-    await deleteEncounter(id);
-    fetchData();
+    const confirmDelete = await globalConfirm(
+      t("combat_sim_delete_encounter_confirm")
+    );
+
+    if (confirmDelete) {
+      try {
+        await deleteEncounter(id);
+        await fetchData();
+        showNotification(t("combat_sim_encounter_deleted"));
+      } catch (error) {
+        console.error("Error deleting encounter:", error);
+        showNotification(t("combat_sim_error_deleting_encounter"), "error");
+      }
+    }
   };
 
   const handleNavigateToEncounter = (id) => {
-    navigate(`/combat-sim/${id}`);
+    navigate(`/combat-sim/${id}`, {
+      state: {
+        from: "/combat-sim",
+      },
+    });
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && encounterName.trim()) {
+      handleSaveEncounter();
+    }
   };
 
   return (
@@ -154,6 +215,7 @@ const CombatSimEncounters = () => {
                 variant="outlined"
                 fullWidth
                 value={encounterName}
+                onKeyDown={handleKeyDown}
                 onChange={handleEncounterNameChange}
                 inputProps={{ maxLength: 200 }}
               />
@@ -196,157 +258,74 @@ const CombatSimEncounters = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ marginTop: 2 }}>
-        {encounters.map((encounter) => (
-          <Grid item xs={12} sm={6} md={4} key={encounter.id}>
-            <Card
-              sx={{
-                backgroundColor: isDarkMode
-                  ? "#292929"
-                  : theme.palette.background.paper,
-                borderRadius: 3,
-                boxShadow: isDarkMode ? 6 : 4,
-                transition: "0.3s",
-                "&:hover": {
-                  boxShadow: isDarkMode ? 10 : 8,
-                  transform: "scale(1.03)",
-                },
-                cursor: "pointer",
-                color: theme.palette.text.primary,
-                position: "relative",
-              }}
-              onClick={() => handleNavigateToEncounter(encounter.id)}
-            >
-              <CardContent sx={{ paddingBottom: "10px" }}>
-                <Typography
-                  variant="h4"
-                  gutterBottom
-                  sx={{ fontWeight: "bold", color: "text.primary" }}
-                >
-                  {encounter.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("combat_sim_created")}:{" "}
-                  {new Date(encounter.createdAt).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("combat_sim_last_updated")}:{" "}
-                  {new Date(encounter.updatedAt).toLocaleString()}
-                </Typography>
-              </CardContent>
-              <CardActions
-                sx={{ justifyContent: "flex-end", padding: "10px 16px" }}
-              >
-                <Tooltip
-                  title={t("Delete")}
-                  enterDelay={300}
-                  leaveDelay={200}
-                  enterNextDelay={300}
-                >
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteEncounter(encounter.id);
-                    }}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardActions>
-              <Box
-                sx={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: theme.palette.text.secondary,
-                }}
-              >
-                <NavigateNext fontSize="medium" />
-              </Box>
-            </Card>
+        {isLoading ? (
+          <Grid
+            item
+            xs={12}
+            sx={{ display: "flex", justifyContent: "center", py: 4 }}
+          >
+            <CircularProgress color="primary" />
           </Grid>
-        ))}
+        ) : encounters.length === 0 ? (
+          <Grid item xs={12}>
+            <Paper
+              sx={{
+                p: 3,
+                textAlign: "center",
+                borderRadius: 2,
+                backgroundColor: theme.palette.background.paper,
+                border: `1px dashed ${theme.palette.divider}`,
+              }}
+            >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {t("combat_sim_no_encounters")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("combat_sim_create_first_encounter")}
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          encounters.map((encounter) => (
+            <Grid item xs={12} sm={6} md={4} key={encounter.id}>
+              <EncounterCard
+                encounter={encounter}
+                onDelete={handleDeleteEncounter}
+                onClick={() => handleNavigateToEncounter(encounter.id)}
+              />
+            </Grid>
+          ))
+        )}
       </Grid>
 
       {/* Settings Dialog */}
-      <Dialog
+      <SettingsDialog
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        sx={{ "& .MuiDialog-paper": { borderRadius: 3, padding: 2 } }}
+        onClose={handleCloseSettings}
+        onSave={handleSaveSettings}
+        settings={localSettings}
+        onSettingChange={handleSettingChange}
+        storeSettings={settingsStore.settings}
+        resetToDefaults={settingsStore.resetToDefaults}
+      />
+
+      {/* Notifications */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={handleNotificationClose}
+        TransitionComponent={Fade}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <DialogTitle
-          variant="h4"
-          sx={{
-            fontWeight: "bold",
-            textAlign: "center",
-            borderBottom: "1px solid #ddd",
-            pb: 1,
-          }}
+        <Alert
+          onClose={handleNotificationClose}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
         >
-          {t("combat_sim_settings")}
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "left",
-            mt: 1,
-          }}
-        >
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={autoUseMP}
-                onChange={(e) => setAutoUseMP(e.target.checked)}
-                sx={{
-                  mt: 0,
-                  "& .MuiSvgIcon-root": { fontSize: "1.5rem" },
-                  "&.Mui-checked": {
-                    color: isDarkMode ? "white !important" : "primary !important",
-                  },
-                }}
-              />
-            }
-            label={t("combat_sim_auto_use_mp")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={autoOpenLogs}
-                onChange={(e) => setAutoOpenLogs(e.target.checked)}
-                sx={{
-                  mt: 0,
-                  "& .MuiSvgIcon-root": { fontSize: "1.5rem" },
-                  "&.Mui-checked": {
-                    color: isDarkMode ? "white !important" : "primary !important",
-                  },
-                }}
-              />
-            }
-            label={t(
-              "combat_sim_auto_open_logs"
-            )}
-          />
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
-          <Button
-            onClick={() => handleCloseSettings()}
-            color={isDarkMode ? "white" : "primary"}
-            sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
-          >
-            {t("Close")}
-          </Button>
-          <Button
-            onClick={handleSaveSettings}
-            variant="contained"
-            color="primary"
-            sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
-          >
-            {t("Save Changes")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

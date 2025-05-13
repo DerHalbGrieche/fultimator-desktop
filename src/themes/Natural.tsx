@@ -281,6 +281,7 @@ const darkNatural = createTheme({
         track: {
           backgroundColor: "#1e1e1e",
           transition: "background-color 0.3s",
+          border: "1px solid #756449",
         },
       },
     },
