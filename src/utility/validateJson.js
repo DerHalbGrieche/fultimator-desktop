@@ -138,6 +138,32 @@ export const validateCharacter = (character) => {
     }
   }
 
+  // Validate 'immunities' object
+  const immunityProps = [
+    "slow",
+    "dazed",
+    "enraged",
+    "weak",
+    "shaken",
+    "poisoned",
+  ];
+  if (
+    typeof character.immunity !== "object" ||
+    Array.isArray(character.immunity) ||
+    character.immunity === null
+  ) {
+    errors.push("Missing: immunity");
+  } else {
+    for (const prop of immunityProps) {
+      if (
+        !character.immunity.hasOwnProperty(prop) ||
+        typeof character.immunity[prop] !== "boolean"
+      ) {
+        errors.push(`Missing or invalid: ${prop} in immunity`);
+      }
+    }
+  }
+
   // Validate 'classes', 'weapons', 'armor', 'notes' arrays
   const arrayProps = ["classes", "weapons", "armor", "notes"];
   for (const prop of arrayProps) {
