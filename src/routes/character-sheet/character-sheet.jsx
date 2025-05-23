@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslate } from "../../translation/translate";
-import { Grid, Button, Typography, Stack } from "@mui/material";
+import { Grid, Button, Typography, Stack, IconButton, useMediaQuery } from "@mui/material";
 import html2canvas from "html2canvas";
 import PlayerCard from "../../components/player/playerSheet/PlayerCard";
 import PlayerNumbers from "../../components/player/playerSheet/PlayerNumbers";
@@ -17,9 +17,10 @@ import PlayerCompanion from "../../components/player/playerSheet/PlayerCompanion
 import powered_by_fu from "../powered_by_fu.png";
 import Layout from "../../components/Layout";
 import { Download } from "@mui/icons-material";
-import PlayerCardShort from "../../components/player/playerSheet/PlayerCardShort";
+import PlayerCardSheet from "../../components/player/playerSheet/compact/PlayerSheetCompact";
 import { getPc } from "../../utility/db";
 import { useTheme } from "@mui/material/styles";
+import { FullscreenTwoTone, FullscreenExitTwoTone } from '@mui/icons-material';
 import useDownload from "../../hooks/useDownload";
 
 export default function CharacterSheet() {
@@ -28,6 +29,7 @@ export default function CharacterSheet() {
   const theme = useTheme();
   const [download, snackbar] = useDownload();
 
+  const isMobile = useMediaQuery('(max-width:600px)');
   const [player, setPlayer] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [fullCharacterSheet, setFullCharacterSheet] = useState(true);
@@ -91,7 +93,7 @@ export default function CharacterSheet() {
     };
 
     // Calculate the scale factor (2000px for full sheet, 1000px for short)
-    const targetWidth = fullCharacterSheet ? 2000 : 1000;
+    const targetWidth = fullCharacterSheet ? 2000 : 266;
     const currentWidth = element.offsetWidth;
     const scale = targetWidth / currentWidth;
 
@@ -110,7 +112,7 @@ export default function CharacterSheet() {
         height: Math.ceil(element.offsetHeight * scale),
         scale: 1, // We're handling scaling manually
       });
-      
+
       const imgData = canvas.toDataURL("image/png");
 
       // Restore original styles
@@ -154,11 +156,26 @@ export default function CharacterSheet() {
             color="primary"
             onClick={() => setFullCharacterSheet(!fullCharacterSheet)}
             style={{ marginBottom: "16px", width: "100%" }} // Add margin to separate from grid
+            sx={{ display: isMobile ? "none" : "flex" }}
           >
             {fullCharacterSheet
               ? t("Short Character Sheet")
               : t("Full Character Sheet")}
           </Button>
+
+          {/* Render icons for mobile */}
+          {isMobile && (
+            <IconButton
+              onClick={() => setFullCharacterSheet(!fullCharacterSheet)}
+              style={{ marginBottom: '16px' }}
+            >
+              {fullCharacterSheet ? (
+                <FullscreenExitTwoTone />
+              ) : (
+                <FullscreenTwoTone />
+              )}
+            </IconButton>
+          )}
         </Grid>
       </Grid>
       {fullCharacterSheet ? (
@@ -227,7 +244,7 @@ export default function CharacterSheet() {
           id="character-sheet-short"
         >
           <Grid container item xs={12}>
-            <PlayerCardShort
+            <PlayerCardSheet
               player={player}
               isCharacterSheet={true}
               characterImage={player.info.imgurl}
