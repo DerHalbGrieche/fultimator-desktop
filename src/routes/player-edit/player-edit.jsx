@@ -15,6 +15,7 @@ import {
   Typography,
   Fab,
   Stack,
+  IconButton,
 } from "@mui/material";
 import { Tabs } from "@mui/base/Tabs";
 import { TabsList as BaseTabsList } from "@mui/base/TabsList";
@@ -50,7 +51,7 @@ import PlayerNotes from "../../components/player/playerSheet/PlayerNotes";
 import PlayerCompanion from "../../components/player/playerSheet/PlayerCompanion";
 import { useTranslate } from "../../translation/translate";
 import { styled } from "@mui/system";
-import { BugReport, Save, Info, KeyboardArrowUp } from "@mui/icons-material";
+import { BugReport, Save, Info, KeyboardArrowUp, FullscreenTwoTone, FullscreenExitTwoTone } from "@mui/icons-material";
 import deepEqual from "deep-equal";
 import PlayerRituals from "../../components/player/playerSheet/PlayerRituals";
 import PlayerQuirk from "../../components/player/playerSheet/PlayerQuirk";
@@ -70,6 +71,7 @@ import {
 import { getPcs, updatePc } from "../../utility/db";
 import PlayerSymbol from "../../components/player/playerSheet/PlayerSymbol";
 import PlayerDance from "../../components/player/playerSheet/PlayerDance";
+import PlayerCardSheet from "../../components/player/playerSheet/compact/PlayerSheetCompact";
 
 export default function PlayerEdit() {
   const { t } = useTranslate();
@@ -90,6 +92,7 @@ export default function PlayerEdit() {
   const [openTab, setOpenTab] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [battleMode, setBattleMode] = useState(false);
+  const [compactView, setCompactView] = useState(false);
 
   const [ritualClockSections, setRitualClockSections] = useState(4);
   const [ritualClockState, setRitualClockState] = useState(
@@ -363,93 +366,148 @@ export default function PlayerEdit() {
             <Tab value={6}>{t("Notes")}</Tab>
           </TabsList>
         )}
-        <TabPanel value={0}>
-          <PlayerCard
-            player={playerTemp}
-            setPlayer={setPlayerTemp}
-            isEditMode={isOwner}
-            isCharacterSheet={false}
-          />
-          <Divider sx={{ my: 1 }} />
-          <PlayerNumbers player={playerTemp} isEditMode={isOwner} />
-          <Divider sx={{ my: 1 }} />
-          <Grid container spacing={1} sx={{ py: 1 }}>
-            <Grid item xs={9} sm={10} md={11}>
-              <BattleModeToggle
-                battleMode={battleMode}
-                setBattleMode={setBattleMode}
-              />
-            </Grid>
-            <Grid item xs={3} sm={2} md={1}>
-              <GenericRolls player={playerTemp} isEditMode={isOwner} />
+        
+        {/* Compact View Toggle - only show when on Player Sheet tab */}
+        {openTab === 0 && (
+          <Grid container spacing={1} sx={{ mb: 2, paddingX: 1 }}>
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setCompactView(!compactView)}
+                style={{ width: "100%" }}
+                sx={{ display: isSmallScreen ? "none" : "flex" }}
+              >
+                {compactView
+                  ? t("Normal View")
+                  : t("Compact View")}
+              </Button>
+              
+              {/* Mobile icon version */}
+              {isSmallScreen && (
+                <IconButton
+                  onClick={() => setCompactView(!compactView)}
+                  color="primary"
+                  sx={{ display: "flex", mx: "auto" }}
+                >
+                  {compactView ? (
+                    <FullscreenTwoTone />
+                  ) : (
+                    <FullscreenExitTwoTone />
+                  )}
+                </IconButton>
+              )}
             </Grid>
           </Grid>
-          {!battleMode && (
+        )}
+        
+        <TabPanel value={0}>
+          {compactView ? (
+            <Grid
+              container
+              sx={{ padding: 1 }}
+              justifyContent={"center"}
+            >
+              <Grid container item xs={12}>
+                <PlayerCardSheet
+                  player={playerTemp}
+                  setPlayer={setPlayerTemp}
+                  isEditMode={isOwner}
+                  isCharacterSheet={true}
+                  characterImage={playerTemp.info.imgurl}
+                />
+              </Grid>
+            </Grid>
+          ) : (
             <>
-              <PlayerTraits player={playerTemp} isEditMode={isOwner} />
-              <PlayerBonds player={playerTemp} isEditMode={isOwner} />
-              <PlayerQuirk player={playerTemp} isEditMode={isOwner} />
-              <PlayerRituals
-                player={playerTemp}
-                isEditMode={isOwner}
-                clockSections={ritualClockSections}
-                setClockSections={setRitualClockSections}
-                clockState={ritualClockState}
-                setClockState={setRitualClockState}
-              />
-              <PlayerCompanion player={playerTemp} isEditMode={isOwner} />
-              <PlayerNotes
+              <PlayerCard
                 player={playerTemp}
                 setPlayer={setPlayerTemp}
                 isEditMode={isOwner}
+                isCharacterSheet={false}
               />
-            </>
-          )}
-          {isOwner && battleMode ? (
-            <PlayerControls player={playerTemp} setPlayer={setPlayerTemp} />
-          ) : null}
-          {battleMode && (
-            <>
-              <PlayerEquipment
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerSkills
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerSpells
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerArcana
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerGadgets
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerMagichant
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerSymbol
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
-              <PlayerDance
-                player={playerTemp}
-                setPlayer={setPlayerTemp}
-                isEditMode={isOwner}
-              />
+              <Divider sx={{ my: 1 }} />
+              <PlayerNumbers player={playerTemp} isEditMode={isOwner} />
+              <Divider sx={{ my: 1 }} />
+              <Grid container spacing={1} sx={{ py: 1 }}>
+                <Grid item xs={9} sm={10} md={11}>
+                  <BattleModeToggle
+                    battleMode={battleMode}
+                    setBattleMode={setBattleMode}
+                  />
+                </Grid>
+                <Grid item xs={3} sm={2} md={1}>
+                  <GenericRolls player={playerTemp} isEditMode={isOwner} />
+                </Grid>
+              </Grid>
+              {!battleMode && (
+                <>
+                  <PlayerTraits player={playerTemp} isEditMode={isOwner} />
+                  <PlayerBonds player={playerTemp} isEditMode={isOwner} />
+                  <PlayerQuirk player={playerTemp} isEditMode={isOwner} />
+                  <PlayerRituals
+                    player={playerTemp}
+                    isEditMode={isOwner}
+                    clockSections={ritualClockSections}
+                    setClockSections={setRitualClockSections}
+                    clockState={ritualClockState}
+                    setClockState={setRitualClockState}
+                  />
+                  <PlayerCompanion player={playerTemp} isEditMode={isOwner} />
+                  <PlayerNotes
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                </>
+              )}
+              {isOwner && battleMode ? (
+                <PlayerControls player={playerTemp} setPlayer={setPlayerTemp} />
+              ) : null}
+              {battleMode && (
+                <>
+                  <PlayerEquipment
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerSkills
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerSpells
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerArcana
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerGadgets
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerMagichant
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerSymbol
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerDance
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                </>
+              )}
             </>
           )}
         </TabPanel>

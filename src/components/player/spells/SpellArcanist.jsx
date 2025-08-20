@@ -68,7 +68,7 @@ const StyledMarkdown = ({ children, ...props }) => {
                 >
                   <Grid item xs>
                     <Typography
-                      variant="h1"
+                      variant="h4"
                       textAlign="left"
                       sx={{ lineHeight: 1.2 }}
                     >

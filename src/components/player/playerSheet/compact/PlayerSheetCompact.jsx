@@ -14,6 +14,7 @@ import PlayerClasses from "./PlayerClasses";
 import PlayerSpells from "./PlayerSpells";
 import PlayerRituals from "./PlayerRituals";
 import PlayerNotes from "./PlayerNotes";
+import PlayerBonds from "./PlayerBonds";
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 
 // Styled Components
@@ -31,6 +32,7 @@ const AffinityGrid = styled(Grid)(({ theme }) => ({
 
 export default function PlayerCardSheet({
     player,
+    setPlayer,
     isMainTab,
     isEditMode,
     isCharacterSheet,
@@ -313,7 +315,8 @@ export default function PlayerCardSheet({
 
                               {/* Tab Panels */}
                                 <CustomTabPanel value={value} index={0}>
-                                    <PlayerEquipment player={player} isCharacterSheet={true} isMainTab={true} searchQuery={searchQuery}/>
+                                    <PlayerBonds player={player} isCharacterSheet={true} />
+                                    <PlayerEquipment player={player} setPlayer={setPlayer} isEditMode={isEditMode} isCharacterSheet={true} isMainTab={true} searchQuery={searchQuery}/>
                                     <PlayerClasses player={player} isCharacterSheet={true} isMainTab={true} searchQuery={searchQuery} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={value} index={1}>
@@ -324,10 +327,11 @@ export default function PlayerCardSheet({
                                     <PlayerSpells player={player} isCharacterSheet={true} searchQuery={searchQuery} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={value} index={3}>
-                                    <PlayerEquipment player={player} isCharacterSheet={true} isMainTab={false} searchQuery={searchQuery} />
+                                    <PlayerEquipment player={player} setPlayer={setPlayer} isEditMode={isEditMode} isCharacterSheet={true} isMainTab={false} searchQuery={searchQuery} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={value} index={4}>
                                     <PlayerNotes player={player} isCharacterSheet={true} searchQuery={searchQuery} />
+                                    <PlayerBonds player={player} isCharacterSheet={true} />
                                 </CustomTabPanel>
                             </Box>
                         </>

@@ -152,45 +152,7 @@ export default function PlayerSpellsFull({ player, isCharacterSheet }) {
                 )
               )
               .map((c, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <Paper
-                    elevation={3}
-                    sx={
-                      isCharacterSheet
-                        ? {
-                            borderRadius: "8px",
-                            border: "2px solid",
-                            borderColor: theme.secondary,
-                            display: "flex",
-                            flexDirection: "column",
-                            marginBottom: "1em",
-                            boxShadow: "none",
-                          }
-                        : {
-                            borderRadius: "8px",
-                            border: "2px solid",
-                            borderColor: theme.secondary,
-                            display: "flex",
-                            flexDirection: "column",
-                            marginBottom: "1em",
-                          }
-                    }
-                  >
-                    <Typography
-                      variant="h1"
-                      sx={{
-                        textTransform: "uppercase",
-                        padding: "5px", // Adjust padding instead of margins
-                        backgroundColor: theme.primary,
-                        color: "white",
-                        borderRadius: "8px 8px 0 0", // Rounded corners only at the top
-                        fontSize: "1.5em",
-                      }}
-                      align="center"
-                    >
-                      {t("Arcana") + " - " + t(c.name)}
-                    </Typography>
-
+                <Grid item xs={12} key={index}>
                     {c.spells
                       .filter(
                         (spell) =>
@@ -202,7 +164,6 @@ export default function PlayerSpellsFull({ player, isCharacterSheet }) {
                       .map((spell, spellIndex) => (
                         <div
                           key={spellIndex}
-                          style={{ marginTop: "0.5em", padding: "0.5em" }}
                         >
                           <SpellArcanist
                             arcana={spell}
@@ -211,7 +172,6 @@ export default function PlayerSpellsFull({ player, isCharacterSheet }) {
                           />
                         </div>
                       ))}
-                  </Paper>
                 </Grid>
               ))}
           </Grid>
