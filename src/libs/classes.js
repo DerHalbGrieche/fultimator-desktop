@@ -1263,7 +1263,7 @@ const classList = [
       {
         skillName: "Symbolism",
         currentLvl: 0,
-        maxLvl: 10,
+        maxLvl: 5,
         description: "Symbolism_desc",
         specialSkill: "",
       },
