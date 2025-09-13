@@ -18,16 +18,15 @@ import ReactMarkdown from "react-markdown";
 import { useCustomTheme } from "../../../hooks/useCustomTheme";
 import attributes from "../../../libs/attributes";
 
-// Available vehicle frames
 const availableFrames = [
   {
     name: "pilot_frame_exoskeleton",
-    passengers: 0, // 0=none, 1=up to one, 2=up to two, 3=up to three
+    passengers: 0,
     distance: 1,
     limits: {
       weapon: 2,
       armor: 1,
-      support: -1, // -1 means unlimited
+      support: -1,
     },
   },
   {
@@ -80,9 +79,17 @@ function ThemedSpellPilot({ pilot, onEditVehicles, isEditMode, onEdit, onModuleC
     p: ({ ...props }) => <p style={inlineStyles} {...props} />,
   };
 
-  // Frame slot validation functions
   const getFrameLimits = (vehicle) => {
     const frame = availableFrames.find(f => f.name === (vehicle.frame || "pilot_frame_exoskeleton"));
+    
+    if ((vehicle.frame === "pilot_custom_frame") && vehicle) {
+      return {
+        weapon: vehicle.customWeaponLimit !== undefined ? vehicle.customWeaponLimit : 1,
+        armor: vehicle.customArmorLimit !== undefined ? vehicle.customArmorLimit : 1,
+        support: -1
+      };
+    }
+    
     return frame ? frame.limits : { weapon: 2, armor: 1, support: -1 };
   };
 
@@ -116,6 +123,57 @@ function ThemedSpellPilot({ pilot, onEditVehicles, isEditMode, onEdit, onModuleC
 
     // Check if unlimited slots for this type
     if (frameLimits[frameType] === -1) return true; // Unlimited
+
+    // For weapons, check hand slot availability
+    if (frameType === "weapon") {
+      const equippedWeapons = vehicle.modules.filter((m, idx) =>
+        idx !== moduleIndex &&
+        m.equipped &&
+        getModuleTypeForLimits(m) === "weapon"
+      );
+
+      // Check if any equipped weapon uses both hands (M+O)
+      const hasBothHandsWeapon = equippedWeapons.some(m => 
+        m.equippedSlot === "both"
+      );
+
+      // If there's a both-hands weapon, no other weapons can be equipped
+      if (hasBothHandsWeapon) return false;
+
+      // For unequipped weapons, check if they can be equipped to any available hand
+      if (!module.equipped) {
+        // Shields can only go to off hand
+        if (module.isShield) {
+          const occupiedSlots = equippedWeapons.map(m => 
+            m.isShield ? "off" : (m.equippedSlot || "main")
+          );
+          return !occupiedSlots.includes("off");
+        }
+        
+        // Regular weapons can go to either main or off hand (whichever is available)
+        const occupiedSlots = equippedWeapons.map(m => 
+          m.isShield ? "off" : (m.equippedSlot || "main")
+        );
+        
+        // Can equip if either main OR off hand is available
+        return !occupiedSlots.includes("main") || !occupiedSlots.includes("off");
+      }
+      
+      // For equipped weapons being re-evaluated, check their specific slot
+      const proposedSlot = module.isShield ? "off" : (module.equippedSlot || "main");
+      
+      // If this weapon uses both hands, check that no other weapons are equipped
+      if (proposedSlot === "both") {
+        return equippedWeapons.length === 0;
+      }
+
+      // Check if the proposed hand slot is available
+      const occupiedSlots = equippedWeapons.map(m => 
+        m.isShield ? "off" : (m.equippedSlot || "main")
+      );
+      
+      return !occupiedSlots.includes(proposedSlot);
+    }
 
     const currentlyEquippedSlots = vehicle.modules.filter((m, idx) =>
       idx !== moduleIndex &&
@@ -230,7 +288,7 @@ function ThemedSpellPilot({ pilot, onEditVehicles, isEditMode, onEdit, onModuleC
                 fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
               }}
             >
-              {t("pilot_enabled_modules")}
+              {t("pilot_module_enable")}
             </Typography>
           </Grid>
         </Grid>
@@ -312,6 +370,14 @@ function ThemedSpellPilot({ pilot, onEditVehicles, isEditMode, onEdit, onModuleC
                         return `${t(vehicle.frame || "pilot_frame_exoskeleton")} | ${t("pilot_passengers")}: ${getPassengersText(passengers)} | ${t("pilot_distance")}: ${getDistanceText(distance)}`;
                       })()}
                     </Typography>
+                    {vehicle.frame === "pilot_custom_frame" && vehicle.customFrameDescription && (
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary", fontSize: "0.8em", fontStyle: "italic", marginTop: 0.5 }}
+                      >
+                        {vehicle.customFrameDescription}
+                      </Typography>
+                    )}
                   </div>
                 </Grid>
                 <Grid
@@ -492,11 +558,10 @@ function ThemedSpellPilot({ pilot, onEditVehicles, isEditMode, onEdit, onModuleC
                               {(module.type === "pilot_module_weapon") ? (
                                 <div>
                                   <Typography sx={{ fontSize: "0.9em", fontWeight: "bold" }}>
-                                    Accuracy: [{attributes[module.att1 || "might"].shortcaps} + {attributes[module.att2 || "dexterity"].shortcaps}]
-                                    {(module.prec && module.prec !== 0) && (module.prec > 0 ? ` +${module.prec}` : ` ${module.prec}`)}
+                                    {t("Accuracy")}: [{attributes[module.att1 || "might"].shortcaps} + {attributes[module.att2 || "dexterity"].shortcaps}] {(module.prec || 0) >= 0 ? `+${module.prec || 0}` : module.prec}
                                   </Typography>
                                   <Typography sx={{ fontSize: "0.9em", fontWeight: "bold" }}>
-                                    Damage: [HR + {(module.damage && module.damage !== 0) ? (module.damage > 0 ? ` +${module.damage}` : ` ${module.damage}`) : ""}]
+                                    {t("Damage")}: [HR + {module.damage || 0}]
                                   </Typography>
                                   <div style={{ fontSize: "0.95em", marginTop: "4px" }}>
                                     <ReactMarkdown components={components}>

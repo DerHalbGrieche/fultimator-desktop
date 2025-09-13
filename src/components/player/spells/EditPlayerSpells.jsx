@@ -849,6 +849,14 @@ export default function EditPlayerSpells({ player, setPlayer, isEditMode }) {
             spells: cls.spells.map((spell, idx) => {
               if (idx === spellIndex && spell.spellType === "invocation") {
                 const currentWellsprings = spell.activeWellsprings || [];
+                const hasInnerWellspring = spell.innerWellspring && spell.chosenWellspring;
+                const isInnerWellspring = hasInnerWellspring && spell.chosenWellspring === wellspringName;
+                
+                // Don't allow toggling the inner wellspring
+                if (isInnerWellspring) {
+                  return spell;
+                }
+                
                 let newWellsprings;
                 
                 if (currentWellsprings.includes(wellspringName)) {

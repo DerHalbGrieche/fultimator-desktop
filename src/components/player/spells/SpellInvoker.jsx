@@ -89,7 +89,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                     key={wellspring.name}
                     label={t(`invoker_${wellspring.name.toLowerCase()}`)}
                     icon={<IconComponent />}
-                    onClick={() => onWellspringToggle && onWellspringToggle(wellspring.name)}
+                    onClick={isInnerWellspring ? undefined : () => onWellspringToggle && onWellspringToggle(wellspring.name)}
                     variant={isActive || isInnerWellspring ? "filled" : "outlined"}
                     sx={{
                       backgroundColor: (isActive || isInnerWellspring) ? wellspringColor : 'transparent',
@@ -97,6 +97,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                       borderColor: isInnerWellspring ? '#4CAF50' : wellspringColor,
                       borderWidth: (isActive || isInnerWellspring) ? '2px' : '1px',
                       fontWeight: (isActive || isInnerWellspring) ? 'bold' : 'normal',
+                      cursor: isInnerWellspring ? 'default' : 'pointer',
                       '& .MuiChip-icon': {
                         color: (isActive || isInnerWellspring) ? 'white' : wellspringColor,
                       },
@@ -118,7 +119,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                 {t("Select exactly 2 wellsprings to determine available invocations")}
                 {invoker.innerWellspring && (
                   <Typography component="span" sx={{ display: 'block', color: '#4CAF50' }}>
-                    Inner Wellspring ({invoker.chosenWellspring}) is always available
+                    {t("invoker_inner_wellspring_always_available").replace("{wellspring}", invoker.chosenWellspring)}
                   </Typography>
                 )}
               </Typography>
@@ -283,7 +284,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                         fontSize: { xs: "0.8rem", sm: "1rem" }
                       }}
                     >
-                      {invocation.name}
+                      {t(invocation.name)}
                     </Typography>
                   </Box>
                   <Box sx={{ 
@@ -303,7 +304,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                     justifyContent: "center" 
                   }}>
                     <Typography sx={{ fontSize: { xs: "0.7rem", sm: "1rem" } }}>
-                      {invocation.type}
+                      {t(invocation.type)}
                     </Typography>
                   </Box>
                   <Box sx={{ 
@@ -314,7 +315,7 @@ function ThemedSpellInvoker({ invoker, onEditInvocations, isEditMode, onWellspri
                   }}>
                     <Typography sx={{ fontSize: { xs: "0.7rem", sm: "1rem" } }}>
                       <ReactMarkdown components={components}>
-                        {invocation.effect}
+                        {t(invocation.effect)}
                       </ReactMarkdown>
                     </Typography>
                   </Box>

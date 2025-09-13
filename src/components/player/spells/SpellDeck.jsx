@@ -951,7 +951,7 @@ function ThemedSpellDeck({ deck = {}, onEdit, onDeckUpdate = () => {}, isEditMod
                     disabled={deckState.hand.length === 0}
                     size="small"
                   >
-                    {t("Discard All")}
+                    {t("ace_discard_all")}
                   </Button>
                 )}
               </>

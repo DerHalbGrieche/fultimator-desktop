@@ -99,8 +99,18 @@ export default function SpellPilotVehiclesModal({
     });
   }, []);
 
-  const getFrameLimits = useCallback((frameName) => {
+  const getFrameLimits = useCallback((frameName, vehicle = null) => {
     const frame = availableFrames.find(f => f.name === frameName);
+    
+    // For custom frames, use custom limits if available
+    if (frameName === "pilot_custom_frame" && vehicle) {
+      return {
+        weapon: vehicle.customWeaponLimit !== undefined ? vehicle.customWeaponLimit : 1,
+        armor: vehicle.customArmorLimit !== undefined ? vehicle.customArmorLimit : 1,
+        support: -1 // Support modules are always unlimited for custom frames
+      };
+    }
+    
     return frame ? frame.limits : { weapon: 2, armor: 1, support: -1 };
   }, []);
 
@@ -114,10 +124,61 @@ export default function SpellPilotVehiclesModal({
   const canEquipModule = useCallback((vehicle, moduleIndex) => {
     const module = vehicle.modules[moduleIndex];
     const frameType = getModuleTypeForLimits(module);
-    const frameLimits = getFrameLimits(vehicle.frame || "pilot_frame_exoskeleton");
+    const frameLimits = getFrameLimits(vehicle.frame || "pilot_frame_exoskeleton", vehicle);
     
     if (frameType === "custom") return true;
     if (frameLimits[frameType] === -1) return true;
+    
+    // For weapons, check hand slot availability
+    if (frameType === "weapon") {
+      const equippedWeapons = vehicle.modules.filter((m, idx) =>
+        idx !== moduleIndex &&
+        m.equipped &&
+        getModuleTypeForLimits(m) === "weapon"
+      );
+
+      // Check if any equipped weapon uses both hands (M+O)
+      const hasBothHandsWeapon = equippedWeapons.some(m => 
+        m.equippedSlot === "both"
+      );
+
+      // If there's a both-hands weapon, no other weapons can be equipped
+      if (hasBothHandsWeapon) return false;
+
+      // For unequipped weapons, check if they can be equipped to any available hand
+      if (!module.equipped) {
+        // Shields can only go to off hand
+        if (module.isShield) {
+          const occupiedSlots = equippedWeapons.map(m => 
+            m.isShield ? "off" : (m.equippedSlot || "main")
+          );
+          return !occupiedSlots.includes("off");
+        }
+        
+        // Regular weapons can go to either main or off hand (whichever is available)
+        const occupiedSlots = equippedWeapons.map(m => 
+          m.isShield ? "off" : (m.equippedSlot || "main")
+        );
+        
+        // Can equip if either main OR off hand is available
+        return !occupiedSlots.includes("main") || !occupiedSlots.includes("off");
+      }
+      
+      // For equipped weapons being re-evaluated, check their specific slot
+      const proposedSlot = module.isShield ? "off" : (module.equippedSlot || "main");
+      
+      // If this weapon uses both hands, check that no other weapons are equipped
+      if (proposedSlot === "both") {
+        return equippedWeapons.length === 0;
+      }
+
+      // Check if the proposed hand slot is available
+      const occupiedSlots = equippedWeapons.map(m => 
+        m.isShield ? "off" : (m.equippedSlot || "main")
+      );
+      
+      return !occupiedSlots.includes(proposedSlot);
+    }
     
     const currentlyEquippedSlots = vehicle.modules.filter((m, idx) => 
       idx !== moduleIndex && 
@@ -147,7 +208,7 @@ export default function SpellPilotVehiclesModal({
   }, [getModuleTypeForLimits]);
 
   const getSlotUsageText = useCallback((vehicle, moduleType) => {
-    const frameLimits = getFrameLimits(vehicle.frame || "pilot_frame_exoskeleton");
+    const frameLimits = getFrameLimits(vehicle.frame || "pilot_frame_exoskeleton", vehicle);
     const equipped = getEquippedCount(vehicle, moduleType);
     const limit = frameLimits[moduleType];
     
@@ -284,6 +345,18 @@ export default function SpellPilotVehiclesModal({
                                 <div>
                                   <Grid container spacing={2}>
                                     <Grid item xs={12}>
+                                      <CustomTextarea
+                                        label={t("pilot_vehicles_description")}
+                                        value={vehicle.customFrameDescription || ""}
+                                        onChange={(e) =>
+                                          handleVehicleChange(vehicleIndex, "customFrameDescription", e.target.value)
+                                        }
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                      />
+                                    </Grid>
+                                    <Grid item xs={12}>
                                       <FormControl fullWidth>
                                         <InputLabel>{t("pilot_passenger")}</InputLabel>
                                         <Select
@@ -314,6 +387,40 @@ export default function SpellPilotVehiclesModal({
                                         </Select>
                                       </FormControl>
                                     </Grid>
+                                    <Grid item xs={6}>
+                                      <FormControl fullWidth>
+                                        <InputLabel>{t("pilot_module_weapon_limit")}</InputLabel>
+                                        <Select
+                                          value={vehicle.customWeaponLimit || 1}
+                                          onChange={(e) =>
+                                            handleVehicleChange(vehicleIndex, "customWeaponLimit", e.target.value)
+                                          }
+                                        >
+                                          <MenuItem value={0}>0</MenuItem>
+                                          <MenuItem value={1}>1</MenuItem>
+                                          <MenuItem value={2}>2</MenuItem>
+                                          <MenuItem value={3}>3</MenuItem>
+                                          <MenuItem value={-1}>{t("Unlimited")}</MenuItem>
+                                        </Select>
+                                      </FormControl>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <FormControl fullWidth>
+                                        <InputLabel>{t("pilot_module_armor_limit")}</InputLabel>
+                                        <Select
+                                          value={vehicle.customArmorLimit || 1}
+                                          onChange={(e) =>
+                                            handleVehicleChange(vehicleIndex, "customArmorLimit", e.target.value)
+                                          }
+                                        >
+                                          <MenuItem value={0}>0</MenuItem>
+                                          <MenuItem value={1}>1</MenuItem>
+                                          <MenuItem value={2}>2</MenuItem>
+                                          <MenuItem value={3}>3</MenuItem>
+                                          <MenuItem value={-1}>{t("Unlimited")}</MenuItem>
+                                        </Select>
+                                      </FormControl>
+                                    </Grid>
                                   </Grid>
                                 </div>
                               );
@@ -334,7 +441,7 @@ export default function SpellPilotVehiclesModal({
                                       strong: (props) => <strong style={{ fontWeight: "bold" }} {...props} />,
                                     }}
                                   >
-                                    {currentFrame.description}
+                                    {t(currentFrame.description)}
                                   </ReactMarkdown>
                                 </div>
                               </div>
