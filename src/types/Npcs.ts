@@ -120,6 +120,7 @@ export interface TypeNpc {
     actions?: NpcAction[],
     extra?: NpcExtra,
     rank?: string,
+    ranklvl?: number;
     spells?: NpcSpell[],
     special?: NpcSpecial[],
     weaponattacks?: NpcWeaponAttack[],

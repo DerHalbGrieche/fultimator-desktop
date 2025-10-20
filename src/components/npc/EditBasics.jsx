@@ -130,7 +130,7 @@ export default function EditBasics({ npc, setNpc }) {
           </Select>
         </FormControl>
       </Grid>
-      <Grid item xs={4}>
+      <Grid item xs={npc.rank === "champion" ? 2 : 4}>
         <Stack spacing={1}>
           <FormControl fullWidth>
             <InputLabel id="rank">{t("Rank:")}</InputLabel>
@@ -143,6 +143,7 @@ export default function EditBasics({ npc, setNpc }) {
             >
               <MenuItem value={"soldier"}>{t("Soldier")}</MenuItem>
               <MenuItem value={"elite"}>{t("Elite")}</MenuItem>
+              <MenuItem value={"champion"}>{t("Champion")}</MenuItem>
               <MenuItem value={"champion1"}>{t("Champion(1)")}</MenuItem>
               <MenuItem value={"champion2"}>{t("Champion(2)")}</MenuItem>
               <MenuItem value={"champion3"}>{t("Champion(3)")}</MenuItem>
@@ -155,6 +156,19 @@ export default function EditBasics({ npc, setNpc }) {
           </FormControl>
         </Stack>
       </Grid>
+      {npc.rank === "champion" && (
+        <Grid item xs={2}>
+          <FormControl variant="standard" fullWidth>
+            <TextField
+              id="ranklvl"
+              label={t("Rank Lvl")}
+              type="number"
+              value={npc.ranklvl || ""}
+              onChange={(e) => onChange("ranklvl", e.target.value)}
+            />
+          </FormControl>
+        </Grid>
+      )}
 
       {/* Villain & Phase Section*/}
       <Grid item xs={4}>

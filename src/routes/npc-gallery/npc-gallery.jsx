@@ -65,6 +65,7 @@ function Personal() {
   );
   const [tagSort, setTagSort] = useState(searchParams.get("tagSort") || null);
   const [tagSearch] = useState("");
+  const [ranklvl, setRanklvl] = useState(searchParams.get("ranklvl") || "");
   const [collapse, setCollapse] = useState(false);
   const [personalList, setPersonalList] = useState([]);
   const [open, setOpen] = useState(false);
@@ -108,6 +109,11 @@ function Personal() {
     updateUrlParams({ tagSort: value });
   };
 
+  const updateRanklvl = (value) => {
+    setRanklvl(value);
+    updateUrlParams({ ranklvl: value });
+  };
+
   // Function to update URL parameters
   const updateUrlParams = (updatedParams) => {
     if (loading) return; // Don't update URL while loading
@@ -119,6 +125,7 @@ function Personal() {
       tagSort,
       sort,
       direction,
+      ranklvl,
       ...updatedParams,
     };
 
@@ -148,6 +155,7 @@ function Personal() {
     setName("");
     setRank("");
     setSpecies("");
+    setRanklvl("");
     setTagSort(null);
     setSort("name"); // Reset to default sort
     setDirection("ascending"); // Reset to default direction
@@ -364,8 +372,14 @@ function Personal() {
                 .fill(0)
                 .map((_, i) => `champion${i + 1}`);
               if (!championRanks.includes(item.rank)) return false;
+            } else if (rank === "champion") {
+              if (ranklvl) {
+                if (item.rank !== `champion${ranklvl}`) return false;
+              } else {
+                if (!item.rank?.startsWith("champion")) return false;
+              }
             } else {
-              if (rank && item.rank !== rank) return false;
+              if (item.rank !== rank) return false;
             }
           }
 
@@ -507,6 +521,7 @@ function Personal() {
                   <MenuItem value={"champion4"}>{t("Champion(4)")}</MenuItem>
                   <MenuItem value={"champion5"}>{t("Champion(5)")}</MenuItem>
                   <MenuItem value={"champion6"}>{t("Champion(6)")}</MenuItem>
+                  <MenuItem value={"champion"}>{t("Champion")}</MenuItem>
                   <MenuItem value={"companion"}>{t("Companion")}</MenuItem>
                   <MenuItem value={"groupvehicle"}>
                     {t("Group Vehicle")}
@@ -514,6 +529,29 @@ function Personal() {
                 </Select>
               </FormControl>
             </Grid>
+            {rank === "champion" && (
+              <Grid
+                item
+                xs={6}
+                md={1.5}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ display: "flex" }}
+              >
+                <TextField
+                  id="outlined-basic"
+                  label={t("Rank Lvl")}
+                  variant="outlined"
+                  size="small"
+                  type="number"
+                  fullWidth
+                  value={ranklvl}
+                  onChange={(evt) => {
+                    updateRanklvl(evt.target.value);
+                  }}
+                />
+              </Grid>
+            )}
             <Grid
               item
               xs={6}
