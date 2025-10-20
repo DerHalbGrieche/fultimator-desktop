@@ -631,13 +631,13 @@ const NPCDetail = ({
             >
               <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
               <MenuItem value={1}>
-                {studyValues === "default" ? "10+" : "7+"}
+                {studyValues === "default" ? "7+" : "10+"}
               </MenuItem>
               <MenuItem value={2}>
-                {studyValues === "default" ? "13+" : "10+"}
+                {studyValues === "default" ? "10+" : "13+"}
               </MenuItem>
               <MenuItem value={3}>
-                {studyValues === "default" ? "16+" : "13+"}
+                {studyValues === "default" ? "13+" : "16+"}
               </MenuItem>
             </Select>
 
@@ -811,13 +811,13 @@ const NPCDetail = ({
                   >
                     <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
                     <MenuItem value={1}>
-                      {studyValues === "default" ? "10+" : "7+"}
+                      {studyValues === "default" ? "7+" : "10+"}
                     </MenuItem>
                     <MenuItem value={2}>
-                      {studyValues === "default" ? "13+" : "10+"}
+                      {studyValues === "default" ? "10+" : "13+"}
                     </MenuItem>
                     <MenuItem value={3}>
-                      {studyValues === "default" ? "16+" : "13+"}
+                      {studyValues === "default" ? "13+" : "16+"}
                     </MenuItem>
                   </Select>
 

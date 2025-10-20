@@ -29,6 +29,7 @@ import {
   Edit,
   HistoryEdu,
   UploadFile,
+  ContentPaste,
 } from "@mui/icons-material";
 import { useEffect, useRef, useState } from "react";
 import useDownloadImage from "../../hooks/useDownloadImage";
@@ -40,6 +41,7 @@ import { validateNpc } from "../../utility/validateJson";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import ExportAllNPCs from "../../components/common/ExportAllNPCs";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import JSZip from "jszip";
 
 export default function NpcGallery() {
   return (
@@ -264,6 +266,22 @@ function Personal() {
     return npcCounter;
   };
 
+  const handlePasteNpc = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const jsonData = JSON.parse(text);
+      await handleFileUpload(jsonData);
+    } catch (err) {
+      console.error("Failed to parse clipboard content:", err);
+      const alertMessage = t("Could not parse clipboard content as JSON.");
+      if (window.electron) {
+        window.electron.alert(alertMessage);
+      } else {
+        alert(alertMessage);
+      }
+    }
+  };
+
   const handleFileUpload = async (jsonData) => {
     try {
       // Validate the JSON data
@@ -301,19 +319,37 @@ function Personal() {
     }
 
     for (const file of files) {
-      const reader = new FileReader();
-      reader.onload = async () => {
+      if (file.name.endsWith(".zip")) {
+        const zip = new JSZip();
         try {
-          const result = JSON.parse(reader.result);
+          const content = await file.arrayBuffer();
+          const result = await zip.loadAsync(content);
+          const jsonFiles = Object.values(result.files).filter(
+            (f) => !f.dir && f.name.endsWith(".json")
+          );
 
-          // Assign a unique ID
-          result.id = await getNextId();
-
-          await handleFileUpload(result); // Ensures sequential execution
+          for (const jsonFile of jsonFiles) {
+            try {
+              const jsonContent = await jsonFile.async("string");
+              const jsonData = JSON.parse(jsonContent);
+              await handleFileUpload(jsonData); // Ensures sequential execution
+            } catch (err) {
+              console.error(`Error processing ${jsonFile.name} from zip:`, err);
+            }
+          }
         } catch (err) {
-          console.error(`Error parsing JSON from ${file.name}:`, err);
+          console.error(`Error reading zip file ${file.name}:`, err);
         }
-      };
+      } else if (file.name.endsWith(".json")) {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const result = JSON.parse(reader.result);
+            await handleFileUpload(result);
+          } catch (err) {
+            console.error(`Error parsing JSON from ${file.name}:`, err);
+          }
+        };
 
       reader.onerror = () => {
         console.error(`Error reading file ${file.name}:`, reader.error);
@@ -321,6 +357,7 @@ function Personal() {
 
       reader.readAsText(file);
       await new Promise((resolve) => (reader.onloadend = resolve)); // Wait for each file to finish processing
+      }
     }
 
     event.target.value = "";
@@ -659,7 +696,7 @@ function Personal() {
             <Grid
               item
               xs={12}
-              md={4}
+              md={3}
               alignItems="center"
               justifyContent="center"
               sx={{ display: "flex" }}
@@ -673,12 +710,12 @@ function Personal() {
                 {t("Create NPC")}
               </Button>
             </Grid>
-            <Grid item xs={12} md={3} sx={{ display: "flex" }}>
+            <Grid item xs={12} md={2.5} sx={{ display: "flex" }}>
               <ExportAllNPCs
                 npcs={filteredList?.length > 0 ? filteredList : []}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={2.5}>
               <Button
                 variant="outlined"
                 startIcon={<UploadFile />}
@@ -690,16 +727,26 @@ function Personal() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json"
+                accept=".json,.zip"
                 multiple
                 onChange={handleFileSelection}
                 style={{ display: "none" }}
               />
             </Grid>
+            <Grid item xs={12} md={2.5}>
+              <Button
+                variant="outlined"
+                startIcon={<ContentPaste />}
+                fullWidth
+                onClick={handlePasteNpc}
+              >
+                {t("Add NPC from Clipboard")}
+              </Button>
+            </Grid>
             <Grid
               item
               xs={12}
-              md={2}
+              md={1.5}
               alignItems="center"
               sx={{ display: "flex" }}
             >
