@@ -131,55 +131,68 @@ const StatsTab = ({
               mt: rowIndex === 0 ? 0 : 1,
             }}
           >
-            {row.map(({ label, color }) => (
-              <ToggleButton
-                key={label}
-                value={label}
-                sx={{
-                  flex: "1 1 16%",
-                  minWidth: "80px", // Minimum width for small screens
-                  justifyContent: "center",
-                  padding: "5px 0",
-                  backgroundColor: isDarkMode ? "#424242" : "#ECECEC", // Background color changes for dark mode
-                  color: isDarkMode ? "#fff !important" : "black !important", // Text color adjusts for dark mode
-                  fontWeight: "bold",
-                  letterSpacing: "1.5px",
-                  fontSize: {
-                    xs: "0.6rem",
-                    sm: "0.75rem",
-                    md: "0.9rem",
-                    lg: "1.2rem",
-                  }, // Adjust font size for smaller screens
-                  transition: "all 0.3s ease-in-out",
-                  "&:hover": {
-                    backgroundColor: isDarkMode
-                      ? "#616161 !important"
-                      : "#D3D3D3 !important", // Hover effect adjusts for dark mode
-                    color: isDarkMode ? "#fff !important" : "black !important", // Text color on hover
-                  },
-                  "&.Mui-selected": {
-                    backgroundColor: color,
-                    color: "white !important",
-                    "&:hover": {
-                      backgroundColor: color + " !important",
-                      color: "white !important",
-                    },
-                  },
-                }}
-              >
-                <Typography
-                  variant="h5"
+            {row.map(({ label, color }) => {
+              const statusKey = label.toLowerCase();
+              const isDisabled = !!selectedNPC?.immunities?.[statusKey];
+              return (
+                <ToggleButton
+                  key={label}
+                  value={label}
+                  disabled={isDisabled}
                   sx={{
+                    flex: "1 1 16%",
+                    minWidth: "80px", // Minimum width for small screens
+                    justifyContent: "center",
+                    padding: "5px 0",
+                    backgroundColor: isDarkMode ? "#424242" : "#ECECEC", // Background color changes for dark mode
+                    color: isDarkMode ? "#fff !important" : "black !important", // Text color adjusts for dark mode
                     fontWeight: "bold",
-                    textAlign: "center",
-                    color: "inherit",
-                    fontSize: { xs: "1rem", sm: "1.2rem" }, // Adjust typography size for small screens
+                    letterSpacing: "1.5px",
+                    fontSize: {
+                      xs: "0.6rem",
+                      sm: "0.75rem",
+                      md: "0.9rem",
+                      lg: "1.2rem",
+                    }, // Adjust font size for smaller screens
+                    transition: "all 0.3s ease-in-out",
+                    "&:hover": {
+                      backgroundColor: isDarkMode
+                        ? "#616161 !important"
+                        : "#D3D3D3 !important", // Hover effect adjusts for dark mode
+                      color: isDarkMode ? "#fff !important" : "black !important", // Text color on hover
+                    },
+                    "&.Mui-selected": {
+                      backgroundColor: color,
+                      color: "white !important",
+                      "&:hover": {
+                        backgroundColor: color + " !important",
+                        color: "white !important",
+                      },
+                    },
+                    "&.Mui-disabled": {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.12)"
+                        : "rgba(0, 0, 0, 0.12)",
+                      color: isDarkMode
+                        ? "rgba(255, 255, 255, 0.3)"
+                        : "rgba(0, 0, 0, 0.26)",
+                    },
                   }}
                 >
-                  {t(label)}
-                </Typography>
-              </ToggleButton>
-            ))}
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      color: "inherit",
+                      fontSize: { xs: "1rem", sm: "1.2rem" }, // Adjust typography size for small screens
+                    }}
+                  >
+                    {t(label)}
+                  </Typography>
+                </ToggleButton>
+              );
+            })}
           </ToggleButtonGroup>
         ))}
       </Box>
