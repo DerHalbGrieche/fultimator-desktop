@@ -21,6 +21,7 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
   const hoveredActiveColor = theme.palette.info.main; // Info color for hover
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [touchedIndex, setTouchedIndex] = useState(null);
 
@@ -38,9 +39,31 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
     };
   }, []);
 
-  const handleClick = (index) => {
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsMouseDown(false);
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
+
+  const handleSectionClick = (index) => {
     const updatedSections = [...state];
-    updatedSections[index] = !updatedSections[index];
+    const isCurrentlyFilled = updatedSections[index];
+
+    if (isCurrentlyFilled) {
+      // If the clicked section is filled, unfill it and all subsequent sections
+      for (let i = index; i < numSections; i++) {
+        updatedSections[i] = false;
+      }
+    } else {
+      // If the clicked section is unfilled, fill it and all preceding sections
+      for (let i = 0; i <= index; i++) {
+        updatedSections[i] = true;
+      }
+    }
     setState(updatedSections);
   };
 
@@ -48,11 +71,20 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
     e.preventDefault(); // Prevent context menu
     if (onReset && !isCharacterSheet) {
       onReset();
+  };
+
+  const handleMouseDown = (index) => {
+    if (!isCharacterSheet && !isMobile) {
+      setIsMouseDown(true);
+      handleSectionClick(index); // Trigger click logic on mousedown
     }
   };
 
   const handleMouseEnter = (index) => {
     if (!isCharacterSheet && !isMobile) {
+      if (isMouseDown) {
+        handleSectionClick(index); // Trigger click logic on drag
+      }
       setHoveredIndex(index);
     }
   };
@@ -73,7 +105,7 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
   const handleTouchEnd = (index) => {
     if (!isCharacterSheet && isMobile) {
       if (touchedIndex === index) {
-        handleClick(index);
+        handleSectionClick(index);
       }
       setTouchedIndex(null);
     }
@@ -82,6 +114,13 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
   const handleTouchCancel = () => {
     if (!isCharacterSheet && isMobile) {
       setTouchedIndex(null);
+    }
+  };
+
+  const handleContextMenu = (e) => {
+    if (!isCharacterSheet) {
+      e.preventDefault(); // Prevent default context menu
+      setState(new Array(numSections).fill(false)); // Reset all sections to false
     }
   };
 
@@ -100,27 +139,28 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
       Z
     `;
 
-    const isHovered = hoveredIndex === i;
-    const isTouched = touchedIndex === i;
     const isActive = state[i];
     let fill = "transparent";
+
+    // Visual feedback for hover/drag
+    const isHoveredOrDragged = (isMouseDown && hoveredIndex !== null && i <= hoveredIndex) || (hoveredIndex === i && !isMouseDown);
 
     if (isCharacterSheet) {
       fill = isActive ? primary : "transparent";
     } else if (isMobile) {
-      // Different handling for mobile
-      if (isTouched && isActive) {
+      const isCurrentlyTouched = touchedIndex !== null && (i <= touchedIndex); // Highlight up to touched index
+      if (isCurrentlyTouched && isActive) {
         fill = hoveredActiveColor;
       } else if (isActive) {
         fill = primary;
-      } else if (isTouched) {
+      } else if (isCurrentlyTouched) {
         fill = secondary;
       }
     } else {
       // Desktop behavior
-      if (isHovered && isActive) {
+      if (isHoveredOrDragged && isActive) {
         fill = hoveredActiveColor;
-      } else if (isHovered) {
+      } else if (isHoveredOrDragged) {
         fill = secondary;
       } else if (isActive) {
         fill = primary;
@@ -134,12 +174,13 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
         fill={fill}
         stroke={strokeColor}
         strokeWidth="1"
-        onClick={() => !isMobile && handleClick(i)}
+        onMouseDown={() => handleMouseDown(i)}
         onMouseEnter={() => handleMouseEnter(i)}
         onMouseLeave={handleMouseLeave}
         onTouchStart={() => handleTouchStart(i)}
         onTouchEnd={() => handleTouchEnd(i)}
         onTouchCancel={handleTouchCancel}
+        onContextMenu={handleContextMenu}
         style={{ cursor: isCharacterSheet ? "default" : "pointer" }}
       />
     );

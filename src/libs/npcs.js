@@ -7,6 +7,10 @@ export function calcHP(npc) {
   }
 
   // Rank
+  if (npc.rank === "champion" && npc.ranklvl) {
+    hp = hp * npc.ranklvl;
+  }
+
   if (npc.rank === "champion1") {
     hp = hp * 1;
   }
@@ -53,6 +57,7 @@ export function calcMP(npc) {
   }
   // Rank
   if (
+    npc.rank === "champion" ||
     npc.rank === "champion1" ||
     npc.rank === "champion2" ||
     npc.rank === "champion3" ||
@@ -80,6 +85,9 @@ export function calcInit(npc) {
   }
 
   // Rank
+  if (npc.rank === "champion" && npc.ranklvl) {
+    init = init + parseInt(npc.ranklvl, 10);
+  }
   if (npc.rank === "champion1") {
     init = init + 1;
   }
@@ -330,6 +338,10 @@ export function calcAvailableSkillsFromVulnerabilities(npc) {
 export function calcAvailableSkillsFromRank(npc) {
   if (npc.rank === "elite") {
     return 1;
+  }
+
+  if (npc.rank === "champion" && npc.ranklvl) {
+    return parseInt(npc.ranklvl, 10);
   }
 
   if (npc.rank === "champion1") {

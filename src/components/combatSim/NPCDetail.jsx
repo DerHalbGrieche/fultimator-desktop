@@ -578,6 +578,7 @@ const NPCDetail = ({
             selectedNPC={selectedNPC}
             calcHP={calcHP}
             calcMP={calcMP}
+            calcAttr={calcAttr}
             handleOpen={handleOpen}
             toggleStatusEffect={toggleStatusEffect}
             handleDecreaseUltima={handleDecreaseUltima}
@@ -631,13 +632,13 @@ const NPCDetail = ({
             >
               <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
               <MenuItem value={1}>
-                {studyValues === "default" ? "10+" : "7+"}
+                {studyValues === "default" ? "7+" : "10+"}
               </MenuItem>
               <MenuItem value={2}>
-                {studyValues === "default" ? "13+" : "10+"}
+                {studyValues === "default" ? "10+" : "13+"}
               </MenuItem>
               <MenuItem value={3}>
-                {studyValues === "default" ? "16+" : "13+"}
+                {studyValues === "default" ? "13+" : "16+"}
               </MenuItem>
             </Select>
 
@@ -678,7 +679,7 @@ const NPCDetail = ({
       )}
 
       {!isMobile && (
-        <AttributeSection selectedNPC={selectedNPC} calcAttr={calcAttr} />
+        <AttributeSection selectedNPC={selectedNPC} setSelectedNPC={setSelectedNPC} selectedNPCs={selectedNPCs} setSelectedNPCs={setSelectedNPCs} calcAttr={calcAttr} />
       )}
 
       {/* Target Selection Dialog */}
@@ -811,13 +812,13 @@ const NPCDetail = ({
                   >
                     <MenuItem value={0}>{t("combat_sim_study")}</MenuItem>
                     <MenuItem value={1}>
-                      {studyValues === "default" ? "10+" : "7+"}
+                      {studyValues === "default" ? "7+" : "10+"}
                     </MenuItem>
                     <MenuItem value={2}>
-                      {studyValues === "default" ? "13+" : "10+"}
+                      {studyValues === "default" ? "10+" : "13+"}
                     </MenuItem>
                     <MenuItem value={3}>
-                      {studyValues === "default" ? "16+" : "13+"}
+                      {studyValues === "default" ? "13+" : "16+"}
                     </MenuItem>
                   </Select>
 
@@ -855,7 +856,7 @@ const NPCDetail = ({
           )}
           <Grid item xs={12}>
             <Box sx={{ width: "100%" }}>
-              <AttributeSection selectedNPC={selectedNPC} calcAttr={calcAttr} />
+              <AttributeSection selectedNPC={selectedNPC} setSelectedNPC={setSelectedNPC} selectedNPCs={selectedNPCs} setSelectedNPCs={setSelectedNPCs} calcAttr={calcAttr} />
             </Box>
           </Grid>
         </Grid>

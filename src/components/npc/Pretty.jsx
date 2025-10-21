@@ -301,6 +301,7 @@ function Rank({ npc }) {
   return (
     <>
       {npc.rank === "elite" && t("Elite")}
+      {npc.rank === "champion" && t("Champion (X)").replace("X", npc.ranklvl)}
       {npc.rank === "champion1" && t("Champion (1)")}
       {npc.rank === "champion2" && t("Champion (2)")}
       {npc.rank === "champion3" && t("Champion (3)")}

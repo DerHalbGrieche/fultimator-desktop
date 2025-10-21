@@ -6,15 +6,17 @@ import {
   Typography,
 } from "@mui/material";
 import HealthBar from "./HealthBar";
-import { GiHearts } from "react-icons/gi";
+import { GiHearts, GiMagicShield, GiShield } from "react-icons/gi";
 import { FaStar } from "react-icons/fa";
 import { t } from "../../../translation/translate";
 import { useTheme } from "@mui/material/styles";
+import { calcDef, calcMDef } from "../../../libs/npcs";
 
 const StatsTab = ({
   selectedNPC,
   calcHP,
   calcMP,
+  calcAttr,
   handleOpen,
   toggleStatusEffect,
   handleDecreaseUltima,
@@ -25,6 +27,13 @@ const StatsTab = ({
 
   const isCrisis =
     selectedNPC?.combatStats?.currentHp <= Math.floor(calcHP(selectedNPC) / 2);
+
+  const totalDef =
+    (calcDef ? calcDef(selectedNPC) : 0) +
+    (calcAttr ? calcAttr("Slow", "Enraged", "dexterity", selectedNPC) : 0);
+  const totalMDef =
+    (calcMDef ? calcMDef(selectedNPC) : 0) +
+    (calcAttr ? calcAttr("Dazed", "Enraged", "insight", selectedNPC) : 0);
 
   return (
     <Box>
@@ -131,58 +140,84 @@ const StatsTab = ({
               mt: rowIndex === 0 ? 0 : 1,
             }}
           >
-            {row.map(({ label, color }) => (
-              <ToggleButton
-                key={label}
-                value={label}
-                sx={{
-                  flex: "1 1 16%",
-                  minWidth: "80px", // Minimum width for small screens
-                  justifyContent: "center",
-                  padding: "5px 0",
-                  backgroundColor: isDarkMode ? "#424242" : "#ECECEC", // Background color changes for dark mode
-                  color: isDarkMode ? "#fff !important" : "black !important", // Text color adjusts for dark mode
-                  fontWeight: "bold",
-                  letterSpacing: "1.5px",
-                  fontSize: {
-                    xs: "0.6rem",
-                    sm: "0.75rem",
-                    md: "0.9rem",
-                    lg: "1.2rem",
-                  }, // Adjust font size for smaller screens
-                  transition: "all 0.3s ease-in-out",
-                  "&:hover": {
-                    backgroundColor: isDarkMode
-                      ? "#616161 !important"
-                      : "#D3D3D3 !important", // Hover effect adjusts for dark mode
-                    color: isDarkMode ? "#fff !important" : "black !important", // Text color on hover
-                  },
-                  "&.Mui-selected": {
-                    backgroundColor: color,
-                    color: "white !important",
-                    "&:hover": {
-                      backgroundColor: color + " !important",
-                      color: "white !important",
-                    },
-                  },
-                }}
-              >
-                <Typography
-                  variant="h5"
+            {row.map(({ label, color }) => {
+              const statusKey = label.toLowerCase();
+              const isDisabled = !!selectedNPC?.immunities?.[statusKey];
+              return (
+                <ToggleButton
+                  key={label}
+                  value={label}
+                  disabled={isDisabled}
                   sx={{
+                    flex: "1 1 16%",
+                    minWidth: "80px", // Minimum width for small screens
+                    justifyContent: "center",
+                    padding: "5px 0",
+                    backgroundColor: isDarkMode ? "#424242" : "#ECECEC", // Background color changes for dark mode
+                    color: isDarkMode ? "#fff !important" : "black !important", // Text color adjusts for dark mode
                     fontWeight: "bold",
-                    textAlign: "center",
-                    color: "inherit",
-                    fontSize: { xs: "1rem", sm: "1.2rem" }, // Adjust typography size for small screens
+                    letterSpacing: "1.5px",
+                    fontSize: {
+                      xs: "0.6rem",
+                      sm: "0.75rem",
+                      md: "0.9rem",
+                      lg: "1.2rem",
+                    }, // Adjust font size for smaller screens
+                    transition: "all 0.3s ease-in-out",
+                    "&:hover": {
+                      backgroundColor: isDarkMode
+                        ? "#616161 !important"
+                        : "#D3D3D3 !important", // Hover effect adjusts for dark mode
+                      color: isDarkMode ? "#fff !important" : "black !important", // Text color on hover
+                    },
+                    "&.Mui-selected": {
+                      backgroundColor: color,
+                      color: "white !important",
+                      "&:hover": {
+                        backgroundColor: color + " !important",
+                        color: "white !important",
+                      },
+                    },
+                    "&.Mui-disabled": {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.12)"
+                        : "rgba(0, 0, 0, 0.12)",
+                      color: isDarkMode
+                        ? "rgba(255, 255, 255, 0.3)"
+                        : "rgba(0, 0, 0, 0.26)",
+                    },
                   }}
                 >
-                  {t(label)}
-                </Typography>
-              </ToggleButton>
-            ))}
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      color: "inherit",
+                      fontSize: { xs: "1rem", sm: "1.2rem" }, // Adjust typography size for small screens
+                    }}
+                  >
+                    {t(label)}
+                  </Typography>
+                </ToggleButton>
+              );
+            })}
           </ToggleButtonGroup>
         ))}
       </Box>
+
+      {/* DEF and M.DEF Section */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 3, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h3" sx={{display: 'flex', alignItems: 'center', gap: 1}}><GiShield /> {t("DEF")}</Typography>
+          <Typography variant="h3">{totalDef}</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h3" sx={{display: 'flex', alignItems: 'center', gap: 1}}><GiMagicShield /> {t("M.DEF")}</Typography>
+          <Typography variant="h3">{totalMDef}</Typography>
+        </Box>
+      </Box>
+
       {/* Ultima Points */}
       {selectedNPC?.villain &&
         selectedNPC?.combatStats?.ultima !== undefined && (
