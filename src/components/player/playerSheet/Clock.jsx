@@ -71,6 +71,7 @@ const Clock = ({ numSections, size, state, setState, isCharacterSheet, onReset }
     e.preventDefault(); // Prevent context menu
     if (onReset && !isCharacterSheet) {
       onReset();
+    }
   };
 
   const handleMouseDown = (index) => {
