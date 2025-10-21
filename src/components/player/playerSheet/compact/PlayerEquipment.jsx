@@ -16,16 +16,57 @@ import attributes from "../../../../libs/attributes";
 import { useCustomTheme } from "../../../../hooks/useCustomTheme";
 import { Casino, RadioButtonUnchecked, Error } from "@mui/icons-material";
 
+/**
+ * Utility function to calculate custom weapon damage and precision stats
+ * @param {Object} weapon - The custom weapon object
+ * @param {boolean} isSecondary - Whether to calculate for secondary (transforming) form
+ * @returns {Object} Object containing calculated damage and precision values
+ */
+const calculateCustomWeaponStats = (weapon, isSecondary = false) => {
+  let damage = 5; // Base damage for custom weapons
+  let precision = 0;
+
+  // Get customizations for primary or secondary form
+  const customizations = isSecondary
+    ? weapon.secondCurrentCustomizations || []
+    : weapon.customizations || [];
+
+  // Apply customization bonuses
+  customizations.forEach((customization) => {
+    const category = isSecondary ? weapon.secondSelectedCategory : weapon.category;
+    switch (customization?.name) {
+      case "weapon_customization_powerful":
+        damage += category === "weapon_category_heavy" ? 7 : 5;
+        break;
+      case "weapon_customization_accurate":
+        precision += 2;
+        break;
+      case "weapon_customization_elemental":
+        damage += 2;
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Apply modifiers with safe parsing
+  const damageModifier = isSecondary ? weapon.secondDamageModifier : weapon.damageModifier;
+  const precModifier = isSecondary ? weapon.secondPrecModifier : weapon.precModifier;
+
+  damage += parseInt(damageModifier || 0, 10);
+  precision += parseInt(precModifier || 0, 10);
+
+  return { damage, precision };
+};
+
 // Styled Components
 const StyledTableCellHeader = styled(TableCell)({ padding: 0, color: "#fff" });
-const StyledTableCell = styled(TableCell)({ padding: 0 });
 
 export default function PlayerEquipment({
   player,
   setPlayer,
   isMainTab,
   isEditMode,
-  isCharacterSheet,
   searchQuery = ''
 }) {
   const { t } = useTranslate();
@@ -99,12 +140,73 @@ export default function PlayerEquipment({
     mDefModifier: 0,
     isEquipped: true,
   };
-  
 
   // Retrieve equipped weapons, armor, shields, and accessories
   const equippedWeapons = player.weapons
     ? player.weapons.filter((weapon) => weapon.isEquipped)
     : [];
+
+  // Retrieve equipped custom weapons and format them for display
+  const equippedCustomWeapons = player.customWeapons
+    ? player.customWeapons.filter((weapon) => weapon.isEquipped)
+    : [];
+
+  // Function to format custom weapons for display
+  const formatCustomWeapon = (customWeapon, isSecondaryForm = false) => {
+    const weaponName = isSecondaryForm
+      ? customWeapon.secondWeaponName || `${customWeapon.name} (Transforming)`
+      : customWeapon.name;
+
+    // Calculate weapon stats using shared utility
+    const stats = calculateCustomWeaponStats(customWeapon, isSecondaryForm);
+    const accuracyCheck = isSecondaryForm ? customWeapon.secondSelectedAccuracyCheck : customWeapon.accuracyCheck;
+    const damageType = isSecondaryForm ? customWeapon.secondSelectedType : customWeapon.type;
+    const category = isSecondaryForm ? customWeapon.secondSelectedCategory : customWeapon.category;
+    const quality = isSecondaryForm ? customWeapon.secondQuality : customWeapon.quality;
+
+    // Check if martial
+    const martialCustomizations = [
+      'weapon_customization_quick',
+      'weapon_customization_magicdefenseboost',
+      'weapon_customization_powerful'
+    ];
+    const customizations = isSecondaryForm ? customWeapon.secondCurrentCustomizations || [] : customWeapon.customizations || [];
+    const isMartial = customizations.some(c => martialCustomizations.includes(c.name));
+
+    return {
+      name: weaponName,
+      cost: customWeapon.cost || 300,
+      category: category,
+      att1: accuracyCheck?.att1 || "dexterity",
+      att2: accuracyCheck?.att2 || "might",
+      prec: stats.precision,
+      damage: stats.damage,
+      type: damageType || "physical",
+      hands: 2, // Custom weapons are always two-handed
+      melee: (isSecondaryForm ? customWeapon.secondSelectedRange : customWeapon.range) === "weapon_range_melee",
+      ranged: (isSecondaryForm ? customWeapon.secondSelectedRange : customWeapon.range) === "weapon_range_ranged",
+      martial: isMartial,
+      quality: quality || "",
+      isEquipped: true,
+      isCustomWeapon: true,
+      originalData: customWeapon
+    };
+  };
+
+  // Format equipped custom weapons for display
+  const formattedCustomWeapons = [];
+  equippedCustomWeapons.forEach((customWeapon) => {
+    // Add primary form
+    formattedCustomWeapons.push(formatCustomWeapon(customWeapon, false));
+
+    // Add secondary form if it's a transforming weapon
+    const hasTransforming = customWeapon.customizations && customWeapon.customizations.some(
+      (c) => c.name === "weapon_customization_transforming"
+    );
+    if (hasTransforming && customWeapon.secondWeaponName) {
+      formattedCustomWeapons.push(formatCustomWeapon(customWeapon, true));
+    }
+  });
 
   const equippedArmor = player.armor
     ? player.armor.filter((armor) => armor.isEquipped)
@@ -118,9 +220,12 @@ export default function PlayerEquipment({
     ? player.accessories.filter((accessory) => accessory.isEquipped)
     : [];
 
+  // Combine regular weapons and custom weapons
+  const allEquippedWeapons = [...equippedWeapons, ...formattedCustomWeapons];
+
   // Add Twin Shields to equipped weapons if the player has Dual Shieldbearer and 2 shields equipped
   if (hasDualShieldBearer && equippedShields.length >= 2) {
-    equippedWeapons.push(twinShields);
+    allEquippedWeapons.push(twinShields);
   }
 
   const precMeleeModifier =
@@ -232,9 +337,13 @@ export default function PlayerEquipment({
 
   const handleEquipment = (item) => {
     if (!setPlayer || !isEditMode) return;
-    
+
+    // Handle custom weapons
+    if (item.isCustomWeapon) {
+      handleEquipCustomWeapon(item);
+    }
     // Determine the equipment type and handle accordingly
-    if (item.category === 'Weapon' || item.melee || item.ranged) {
+    else if (item.category === 'Weapon' || item.melee || item.ranged) {
       handleEquipWeapon(item);
     } else if (item.category === 'Armor') {
       handleEquipArmor(item);
@@ -243,6 +352,39 @@ export default function PlayerEquipment({
     } else if (item.category === 'Accessory') {
       handleEquipAccessory(item);
     }
+  };
+
+  const handleEquipCustomWeapon = (item) => {
+    const customWeapon = item.originalData;
+    setPlayer(prevPlayer => {
+      const updatedCustomWeapons = [...(prevPlayer.customWeapons || [])];
+      const weaponIndex = updatedCustomWeapons.findIndex(w => w === customWeapon);
+      if (weaponIndex !== -1) {
+        updatedCustomWeapons[weaponIndex] = { ...customWeapon, isEquipped: !customWeapon.isEquipped };
+
+        // If unequipping, also unequip regular weapons and shields
+        if (!customWeapon.isEquipped) {
+          const updatedWeapons = (prevPlayer.weapons || []).map(weapon => ({
+            ...weapon,
+            isEquipped: false
+          }));
+          const updatedShields = (prevPlayer.shields || []).map(shield => ({
+            ...shield,
+            isEquipped: false
+          }));
+
+          return {
+            ...prevPlayer,
+            customWeapons: updatedCustomWeapons,
+            weapons: updatedWeapons,
+            shields: updatedShields
+          };
+        }
+
+        return { ...prevPlayer, customWeapons: updatedCustomWeapons };
+      }
+      return prevPlayer;
+    });
   };
 
   const canEquipWeapon = (weapon) => {
@@ -272,6 +414,7 @@ export default function PlayerEquipment({
     let oneHandedCount = 0;
     let twoHandedCount = 0;
 
+    // Count regular weapons
     if (player.weapons) {
       player.weapons.forEach((weapon) => {
         if (weapon.isEquipped) {
@@ -280,6 +423,15 @@ export default function PlayerEquipment({
           } else if (weapon.hands === 2) {
             twoHandedCount++;
           }
+        }
+      });
+    }
+
+    // Count custom weapons (all are two-handed)
+    if (player.customWeapons) {
+      player.customWeapons.forEach((weapon) => {
+        if (weapon.isEquipped) {
+          twoHandedCount++;
         }
       });
     }
@@ -338,7 +490,7 @@ export default function PlayerEquipment({
   const handleEquipShield = (shield) => {
     const shieldsCount = countEquippedShields();
     const { twoHandedCount } = countEquippedWeapons();
-    
+
     if (shield.isEquipped || (shieldsCount < (hasDualShieldBearer ? 2 : 1) && twoHandedCount === 0)) {
       setPlayer(prevPlayer => {
         const updatedShields = [...(prevPlayer.shields || [])];
@@ -350,7 +502,7 @@ export default function PlayerEquipment({
         return prevPlayer;
       });
     } else {
-      const message = hasDualShieldBearer 
+      const message = hasDualShieldBearer
         ? t("You can only equip up to 2 shields.")
         : t("You can only equip 1 shield or your hands are occupied.");
       if (window.electron) {
@@ -530,7 +682,7 @@ export default function PlayerEquipment({
 
       if (benefits.martials) {
         if (
-          (item.category === 'Weapon' || item.melee || item.ranged) &&
+          (item.category === 'Weapon' || item.melee || item.ranged || item.isCustomWeapon) &&
           ((item.melee && benefits.martials.melee) || (item.ranged && benefits.martials.ranged))
         ) {
           return true;
@@ -601,12 +753,15 @@ export default function PlayerEquipment({
             </TableHead>
           </Table>
         )}
-        {equippedWeapons.length > 0 && (
-          <CollapsibleWeapon weapons={equippedWeapons} handleEquipment={handleEquipment} handleDiceRoll={handleDiceRoll} isMainTab={isMainTab} searchQuery={searchQuery} />
+        {allEquippedWeapons.length > 0 && (
+          <CollapsibleWeapon weapons={allEquippedWeapons} handleEquipment={handleEquipment} handleDiceRoll={handleDiceRoll} isMainTab={isMainTab} searchQuery={searchQuery} />
         )}
         {!isMainTab && (
           <AllWeapon
-            weapons={player.weapons?.filter(w => !w.isEquipped) || []}
+            weapons={[
+              ...(player.weapons?.filter(w => !w.isEquipped) || []),
+              ...((player.customWeapons?.filter(w => !w.isEquipped) || []).map(cw => formatCustomWeapon(cw, false)))
+            ]}
             handleEquipment={handleEquipment}
             handleDiceRoll={handleDiceRoll}
             checkIfEquippable={checkIfEquippable}
@@ -894,13 +1049,13 @@ function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, isMainTab
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>
@@ -1050,13 +1205,13 @@ function CollapsibleArmor({ armors, handleEquipment, handleDiceRoll, isMainTab, 
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>
@@ -1089,13 +1244,13 @@ function CollapsibleArmor({ armors, handleEquipment, handleDiceRoll, isMainTab, 
                     <Box component="span" sx={{ mr: '4px' }}>{t("M.DEF")}:</Box>
                     <Box component="span">
                       {armor.category === "Shield"
-                          ? "+" + parseInt(armor.mdef + (armor.mDefModifier || 0))
-                          : ""}
+                        ? "+" + parseInt(armor.mdef + (armor.mDefModifier || 0))
+                        : ""}
                       {armor.category === "Armor"
-                          ? armor.mdef + (armor.mDefModifier || 0) === 0
-                              ? t("INS die")
-                              : `${t("INS die")} + ${armor.mdef + (armor.mDefModifier || 0)}`
-                          : ""}
+                        ? armor.mdef + (armor.mDefModifier || 0) === 0
+                          ? t("INS die")
+                          : `${t("INS die")} + ${armor.mdef + (armor.mDefModifier || 0)}`
+                        : ""}
                     </Box>
                   </Typography>
                 </StyledTableCell>
@@ -1230,13 +1385,13 @@ function CollapsibleAccessory({ accessorys, handleEquipment, handleDiceRoll, isM
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>
@@ -1358,13 +1513,13 @@ function AllWeapon({ weapons, handleEquipment, handleDiceRoll, checkIfEquippable
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>
@@ -1524,13 +1679,13 @@ function AllArmor({ armors, handleEquipment, handleDiceRoll, checkIfEquippable, 
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>
@@ -1563,13 +1718,13 @@ function AllArmor({ armors, handleEquipment, handleDiceRoll, checkIfEquippable, 
                     <Box component="span" sx={{ mr: '4px' }}>{t("M.DEF")}:</Box>
                     <Box component="span">
                       {armor.category === "Shield"
-                          ? "+" + parseInt(armor.mdef + (armor.mDefModifier || 0))
-                          : ""}
+                        ? "+" + parseInt(armor.mdef + (armor.mDefModifier || 0))
+                        : ""}
                       {armor.category === "Armor"
-                          ? armor.mdef + (armor.mDefModifier || 0) === 0
-                              ? t("INS die")
-                              : `${t("INS die")} + ${armor.mdef + (armor.mDefModifier || 0)}`
-                          : ""}
+                        ? armor.mdef + (armor.mDefModifier || 0) === 0
+                          ? t("INS die")
+                          : `${t("INS die")} + ${armor.mdef + (armor.mDefModifier || 0)}`
+                        : ""}
                     </Box>
                   </Typography>
                 </StyledTableCell>
@@ -1717,13 +1872,13 @@ function AllAccessory({ accessorys, handleEquipment, handleDiceRoll, isMainTab, 
                   </IconButton>
                 </StyledTableCell>
                 <StyledTableCell
-                    sx={{
-                      width: { xs: '100px', md: '128px' },
-                      maxWidth: { xs: '100px', md: '128px' },
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  sx={{
+                    width: { xs: '100px', md: '128px' },
+                    maxWidth: { xs: '100px', md: '128px' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   <Box onClick={() => toggleRow(index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Typography variant="body2" fontWeight="bold" textAlign="left" sx={{ marginRight: "4px" }}>

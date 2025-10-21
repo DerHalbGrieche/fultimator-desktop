@@ -938,7 +938,7 @@ const classList = [
       custom: [
         "You may choose to permanently increase your maximum Hit Points or Mind Points by 5 (your choice).",
       ],
-      spellClasses: [],
+      spellClasses: ["deck"],
     },
     skills: [
       {
@@ -1263,7 +1263,7 @@ const classList = [
       {
         skillName: "Symbolism",
         currentLvl: 0,
-        maxLvl: 10,
+        maxLvl: 5,
         description: "Symbolism_desc",
         specialSkill: "",
       },
@@ -1286,7 +1286,8 @@ const classList = [
       rituals: {
         ritualism: false,
       },
-      spellClasses: [],
+
+      spellClasses: ["gift"],
     },
     skills: [
       {
@@ -1343,7 +1344,7 @@ const classList = [
       rituals: {
         ritualism: false,
       },
-      spellClasses: [],
+      spellClasses: ["therioform"],
     },
     skills: [
       {
@@ -1400,7 +1401,7 @@ const classList = [
       rituals: {
         ritualism: false,
       },
-      spellClasses: [],
+      spellClasses: ["pilot-vehicle"],
     },
     skills: [
       {
@@ -1460,7 +1461,7 @@ const classList = [
       custom: [
         "You may choose to permanently increase your maximum Hit Points or Mind Points by 5 (your choice).",
       ],
-      spellClasses: ["magiseeds"],
+      spellClasses: ["magiseed"],
     },
     skills: [
       {
