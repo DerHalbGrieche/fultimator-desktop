@@ -578,6 +578,7 @@ const NPCDetail = ({
             selectedNPC={selectedNPC}
             calcHP={calcHP}
             calcMP={calcMP}
+            calcAttr={calcAttr}
             handleOpen={handleOpen}
             toggleStatusEffect={toggleStatusEffect}
             handleDecreaseUltima={handleDecreaseUltima}
@@ -678,7 +679,7 @@ const NPCDetail = ({
       )}
 
       {!isMobile && (
-        <AttributeSection selectedNPC={selectedNPC} calcAttr={calcAttr} />
+        <AttributeSection selectedNPC={selectedNPC} setSelectedNPC={setSelectedNPC} selectedNPCs={selectedNPCs} setSelectedNPCs={setSelectedNPCs} calcAttr={calcAttr} />
       )}
 
       {/* Target Selection Dialog */}
@@ -855,7 +856,7 @@ const NPCDetail = ({
           )}
           <Grid item xs={12}>
             <Box sx={{ width: "100%" }}>
-              <AttributeSection selectedNPC={selectedNPC} calcAttr={calcAttr} />
+              <AttributeSection selectedNPC={selectedNPC} setSelectedNPC={setSelectedNPC} selectedNPCs={selectedNPCs} setSelectedNPCs={setSelectedNPCs} calcAttr={calcAttr} />
             </Box>
           </Grid>
         </Grid>

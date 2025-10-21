@@ -18,6 +18,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import BattleHeader from "../../components/combatSim/BattleHeader";
 import NpcSelector from "../../components/combatSim/NpcSelector";
+import LeftPaneTabs from "../../components/combatSim/LeftPaneTabs";
 import { calcHP, calcMP } from "../../libs/npcs";
 import SelectedNpcs from "../../components/combatSim/SelectedNpcs";
 import useDownloadImage from "../../hooks/useDownloadImage";
@@ -320,6 +321,15 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
         const prevEffects = prevNpc.combatStats.statusEffects || [];
         if (JSON.stringify(currentEffects) !== JSON.stringify(prevEffects)) {
           console.log("Status effects changed for NPC", currentNpc.name);
+          hasChanges = true;
+          break;
+        }
+
+        // Check attribute modifiers changes
+        const currentModifiers = currentNpc.combatStats.attributeModifiers || {};
+        const prevModifiers = prevNpc.combatStats.attributeModifiers || {};
+        if (JSON.stringify(currentModifiers) !== JSON.stringify(prevModifiers)) {
+          console.log("Attribute modifiers changed for NPC", currentNpc.name);
           hasChanges = true;
           break;
         }
@@ -1047,11 +1057,20 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
     let attributeValue = npc?.attributes?.[attribute] || 6; // Default to 6 if attribute is missing
 
     // Check in npc.combatStats.statusEffects for the status effects
-    if (npc.combatStats.statusEffects?.includes(statusEffect1)) {
+    if (npc?.combatStats?.statusEffects?.includes(statusEffect1)) {
       attributeValue -= 2;
     }
-    if (npc.combatStats.statusEffects?.includes(statusEffect2)) {
+    if (npc?.combatStats?.statusEffects?.includes(statusEffect2)) {
       attributeValue -= 2;
+    }
+
+    // Add temporary modifiers
+    if (npc.combatStats?.attributeModifiers?.[attribute]) {
+      const sumOfModifiers = npc.combatStats.attributeModifiers[attribute].reduce(
+        (sum, mod) => sum + mod,
+        0
+      );
+      attributeValue += sumOfModifiers;
     }
 
     // Ensure the attribute stays within the defined bounds
@@ -1322,14 +1341,18 @@ const CombatSim = ({ setIsDirty, isDirty }) => {
           height: isMobile ? "calc(100vh - 195px)" : "calc(100vh - 157px)",
         }}
       >
-        {/* NPC Selector */}
+        {/* Left Pane Tabs */}
         {!isMobile && (
-          <NpcSelector
-            isMobile={isMobile}
-            npcDrawerOpen={npcDrawerOpen}
-            setNpcDrawerOpen={setNpcDrawerOpen}
+          <LeftPaneTabs
             npcList={npcList}
             handleSelectNPC={handleSelectNPC}
+            encounterClocks={encounterClocks}
+            handleUpdateClock={handleUpdateClock}
+            handleRemoveClock={handleRemoveClock}
+            handleResetClock={handleResetClock}
+            addLog={addLog}
+            isMobile={isMobile}
+            onAddClockClick={() => setClockDialogOpen(true)}
           />
         )}
         <Box

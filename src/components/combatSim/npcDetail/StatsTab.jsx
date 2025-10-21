@@ -6,15 +6,17 @@ import {
   Typography,
 } from "@mui/material";
 import HealthBar from "./HealthBar";
-import { GiHearts } from "react-icons/gi";
+import { GiHearts, GiMagicShield, GiShield } from "react-icons/gi";
 import { FaStar } from "react-icons/fa";
 import { t } from "../../../translation/translate";
 import { useTheme } from "@mui/material/styles";
+import { calcDef, calcMDef } from "../../../libs/npcs";
 
 const StatsTab = ({
   selectedNPC,
   calcHP,
   calcMP,
+  calcAttr,
   handleOpen,
   toggleStatusEffect,
   handleDecreaseUltima,
@@ -25,6 +27,13 @@ const StatsTab = ({
 
   const isCrisis =
     selectedNPC?.combatStats?.currentHp <= Math.floor(calcHP(selectedNPC) / 2);
+
+  const totalDef =
+    (calcDef ? calcDef(selectedNPC) : 0) +
+    (calcAttr ? calcAttr("Slow", "Enraged", "dexterity", selectedNPC) : 0);
+  const totalMDef =
+    (calcMDef ? calcMDef(selectedNPC) : 0) +
+    (calcAttr ? calcAttr("Dazed", "Enraged", "insight", selectedNPC) : 0);
 
   return (
     <Box>
@@ -196,6 +205,19 @@ const StatsTab = ({
           </ToggleButtonGroup>
         ))}
       </Box>
+
+      {/* DEF and M.DEF Section */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 3, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h3" sx={{display: 'flex', alignItems: 'center', gap: 1}}><GiShield /> {t("DEF")}</Typography>
+          <Typography variant="h3">{totalDef}</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h3" sx={{display: 'flex', alignItems: 'center', gap: 1}}><GiMagicShield /> {t("M.DEF")}</Typography>
+          <Typography variant="h3">{totalMDef}</Typography>
+        </Box>
+      </Box>
+
       {/* Ultima Points */}
       {selectedNPC?.villain &&
         selectedNPC?.combatStats?.ultima !== undefined && (

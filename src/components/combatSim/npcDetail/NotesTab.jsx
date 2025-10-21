@@ -27,6 +27,15 @@ const NotesTab = ({
     setCustomLog(""); // Clear the textfield after sending
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (customLog.trim()) {
+        handleSendLog();
+      }
+    }
+  };
+
   return (
     <>
       <TextField
@@ -102,6 +111,7 @@ const NotesTab = ({
         fullWidth
         value={customLog}
         onChange={(e) => setCustomLog(e.target.value)}
+        onKeyDown={handleKeyDown}
         sx={{ mt: 2 }}
         InputProps={{
           endAdornment: (

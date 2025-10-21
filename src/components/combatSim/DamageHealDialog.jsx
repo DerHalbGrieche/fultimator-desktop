@@ -10,11 +10,6 @@ import {
   TextField,
   ToggleButtonGroup,
   ToggleButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  ListItemText,
   FormControlLabel,
   Checkbox,
   Box,
@@ -167,67 +162,53 @@ const DamageHealDialog = ({
           />
           {statType === "HP" && !isHealing && (
             <>
-              <FormControl
-                fullWidth
-                sx={{
-                  mt: 2,
-                  mb: 1,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                  },
-                }}
-              >
-                <InputLabel id="damage-type-label">
-                  {t("combat_sim_damage_type")}
-                </InputLabel>
-                <Select
-                  label={t("combat_sim_damage_type")}
+              <Box sx={{ width: "100%", mt: 1, mb: 1 }}>
+                <Button
+                  fullWidth
+                  variant={damageType === "" ? "contained" : "outlined"}
+                  onClick={() => setDamageType("")}
+                  sx={{ mb: 1 }}
+                >
+                  {t("combat_sim_none")}
+                </Button>
+                <ToggleButtonGroup
                   value={damageType}
-                  onChange={(e) => {
-                    setDamageType(e.target.value);
+                  exclusive
+                  onChange={(e, newValue) => {
+                    if (newValue !== null) {
+                      setDamageType(newValue);
+                    }
                   }}
+                  aria-label="damage type"
                   sx={{
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      borderColor: isDarkMode ? "#fff" : "primary",
-                    },
+                    display: "grid",
+                    gridTemplateColumns: "repeat(5, 1fr)",
+                    gap: 1,
                   }}
                 >
-                  <MenuItem value="">
-                    <ListItemText>{t("combat_sim_none")}</ListItemText>
-                  </MenuItem>
                   {typesList.map((type) => (
-                    <MenuItem
+                    <ToggleButton
                       key={type}
                       value={type}
+                      aria-label={type}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        paddingY: "6px",
+                        aspectRatio: "1 / 1",
+                        border: "1px solid rgba(0, 0, 0, 0.12)",
+                        borderRadius: "4px !important",
+                        "&.Mui-selected": {
+                          backgroundColor: "secondary.main",
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: "secondary.dark",
+                          },
+                        },
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          minWidth: 70,
-                        }}
-                      >
-                        <TypeIcon type={type} />
-                        <ListItemText
-                          sx={{
-                            ml: 1,
-                            marginBottom: 0,
-                            textTransform: "capitalize",
-                          }}
-                        >
-                          {t(type)}
-                        </ListItemText>
-                      </Box>
-                    </MenuItem>
+                      <TypeIcon type={type} />
+                    </ToggleButton>
                   ))}
-                </Select>
-              </FormControl>
+                </ToggleButtonGroup>
+              </Box>
               <FormControlLabel
                 control={
                   <Checkbox

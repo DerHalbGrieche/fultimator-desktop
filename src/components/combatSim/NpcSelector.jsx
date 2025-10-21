@@ -12,11 +12,9 @@ import {
   InputLabel,
   FormControl,
   Divider,
-  IconButton,
   Drawer,
   Tooltip,
 } from "@mui/material";
-import { KeyboardArrowLeft, KeyboardArrowRight } from "@mui/icons-material"; // Import Material-UI icons
 import {
   GiRaiseZombie,
   GiWolfHead,
@@ -58,7 +56,6 @@ export default function NpcSelector({
   const isDarkMode = theme.palette.mode === "dark";
   const [filterText, setFilterText] = useState("");
   const [filterField, setFilterField] = useState("name");
-  const [isExpanded, setIsExpanded] = useState(true);
 
   // Filtered NPC list based on selected filter field and text
   const filteredNpcList = npcList.filter((npc) => {
@@ -245,154 +242,114 @@ export default function NpcSelector({
   ) : (
     <Box
       sx={{
-        width: isExpanded ? "20%" : "60px", // Collapsed view
-        bgcolor: isDarkMode ? "#333333" : "#ffffff",
-        padding: 2,
+        width: "100%",
         height: "100%",
         borderRadius: "8px",
+        display: "flex",
+        flexDirection: "column",
         transition: "width 0.3s ease-in-out", // Smooth transition
       }}
     >
-      {isExpanded && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between", // Ensure title and button are on opposite ends
-            alignItems: "center",
-            borderBottom: "1px solid #ccc",
-            marginBottom: 2,
-            paddingBottom: 1,
-          }}
-        >
-          <Typography variant="h5">{t("combat_sim_npc_selector")}</Typography>
-          <Tooltip
-            title={t("Collapse")}
-            placement="left"
-            enterDelay={500}
-            enterNextDelay={300}
+      {/* Filter Controls */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          marginBottom: 2,
+        }}
+      >
+        <TextField
+          label={t("combat_sim_search")}
+          variant="outlined"
+          size="small"
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+            sx={{ width: "60%" }}
+          />
+          <FormControl size="small" sx={{ width: "35%" }}>
+          <InputLabel>{t("combat_sim_filter_by")}</InputLabel>
+          <Select
+            value={filterField}
+            onChange={(e) => setFilterField(e.target.value)}
+            label={t("combat_sim_filter_by")}
           >
-            <IconButton
-              onClick={() => setIsExpanded(!isExpanded)}
-              sx={{ padding: 0 }}
-            >
-              <KeyboardArrowLeft />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
+            <MenuItem value="name">{t("Name")}</MenuItem>
+            <MenuItem value="lvl">{t("Level")}</MenuItem>
+            <MenuItem value="species">{t("Species")}</MenuItem>
+            <MenuItem value="rank">{t("Rank")}</MenuItem>
+            <MenuItem value="tags">{t("Personal Tags")}</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
-      {!isExpanded && (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <Tooltip
-            title={t("Expand")}
-            placement="bottom"
-            enterDelay={500}
-            enterNextDelay={300}
-          >
-            <IconButton
-              onClick={() => setIsExpanded(!isExpanded)}
-              sx={{ padding: 0 }}
-            >
-              <KeyboardArrowRight />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
+      {/* NPC List */}
+      <Box sx={{ maxHeight: "calc(100vh - 295px)", overflowY: "auto" }}>
+        <List sx={{ height: "calc(100vh - 295px)", overflowY: "auto" }}>
 
-      {isExpanded && (
-        <>
-          {/* Filter Controls */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              marginBottom: 2,
-            }}
-          >
-            <TextField
-              label={t("combat_sim_search")}
-              variant="outlined"
-              size="small"
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              sx={{ width: "60%" }}
-            />
-            <FormControl size="small" sx={{ width: "35%" }}>
-              <InputLabel>{t("combat_sim_filter_by")}</InputLabel>
-              <Select
-                value={filterField}
-                onChange={(e) => setFilterField(e.target.value)}
-                label={t("combat_sim_filter_by")}
-              >
-                <MenuItem value="name">{t("Name")}</MenuItem>
-                <MenuItem value="lvl">{t("Level")}</MenuItem>
-                <MenuItem value="species">{t("Species")}</MenuItem>
-                <MenuItem value="rank">{t("Rank")}</MenuItem>
-                <MenuItem value="tags">{t("Personal Tags")}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* NPC List */}
-          <Box sx={{ maxHeight: "calc(100vh - 295px)", overflowY: "auto" }}>
-            <List sx={{ height: "calc(100vh - 295px)", overflowY: "auto" }}>
-              {filteredNpcList.map((npc) => (
-                <Box key={npc.id}>
-                  <ListItem
-                    button
-                    onClick={() => handleSelectNPC(npc.id)}
-                    sx={{ padding: "5px 10px", cursor: "pointer" }}
+          {filteredNpcList.length > 0 ? (
+            filteredNpcList.map((npc) => (
+              <Box key={npc.id}>
+                <ListItem
+                  button
+                  onClick={() => handleSelectNPC(npc.id)}
+                  sx={{ padding: "5px 10px", cursor: "pointer" }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        width: "100%",
-                      }}
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography variant="h5" fontWeight={"bold"}>
-                            {npc.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontFamily: "Antonio" }}
-                            component="span"
-                          >
-                            <Tooltip title={t(npc.species)}>
-                              <span>
-                                {npc.species === "Beast" && <GiWolfHead />}
-                                {npc.species === "Construct" && (
-                                  <GiRobotGolem />
-                                )}
-                                {npc.species === "Demon" && <GiEvilBat />}
-                                {npc.species === "Elemental" && <GiFire />}
-                                {npc.species === "Humanoid" && <GiSwordwoman />}
-                                {npc.species === "Undead" && <GiRaiseZombie />}
-                                {npc.species === "Plant" && <GiRose />}
-                                {npc.species === "Monster" && <GiGooeyDaemon />}
-                              </span>
-                            </Tooltip>
-                            {" | "}
-                            {t("Level")}: {npc.lvl}
-                            {npc.rank && " | " + t(rankText(npc.rank))}
-                          </Typography>
-                        }
-                      />
-                    </Box>
-                  </ListItem>
-                  <Divider />
-                </Box>
-              ))}
-            </List>
-          </Box>
-        </>
-      )}
+                    <ListItemText
+                      primary={
+                        <Typography variant="h5" fontWeight={"bold"}>
+                          {npc.name}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontFamily: "Antonio" }}
+                          component="span"
+                        >
+                          <Tooltip title={t(npc.species)}>
+                            <span>
+                              {npc.species === "Beast" && <GiWolfHead />}
+                              {npc.species === "Construct" && (
+                                <GiRobotGolem />
+                              )}
+                              {npc.species === "Demon" && <GiEvilBat />}
+                              {npc.species === "Elemental" && <GiFire />}
+                              {npc.species === "Humanoid" && <GiSwordwoman />}
+                              {npc.species === "Undead" && <GiRaiseZombie />}
+                              {npc.species === "Plant" && <GiRose />}
+                              {npc.species === "Monster" && <GiGooeyDaemon />}
+                            </span>
+                          </Tooltip>
+                          {" | "}
+                          {t("Level")}: {npc.lvl}
+                          {npc.rank && " | " + t(rankText(npc.rank))}
+                        </Typography>
+                      }
+                    />
+                  </Box>
+                </ListItem>
+                <Divider />
+              </Box>
+            ))
+          ) : (
+            <Typography
+              variant="body2"
+              sx={{ padding: 2, color: "text.secondary", textAlign: "center" }}
+            >
+              {t("combat_sim_no_npc_found")}.
+            </Typography>
+          )}
+        </List>
+      </Box>
     </Box>
   );
 }
