@@ -34,4 +34,4 @@ Once downloaded, follow these steps to open Fultimator:
 - macOS 10.12 (Sierra) or later.
 
 ## Troubleshooting
-If you encounter issues, feel free to reach out for support on our **[Discord Server](https://discord.gg/9yYc6R93Cd)**, in the `#support` channel.
+If you encounter issues, feel free to reach out for support on our **[Discord Server](https://discord.gg/aNEgvHm3Re)**, in the `#support` channel.

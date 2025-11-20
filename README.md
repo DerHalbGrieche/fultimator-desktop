@@ -50,8 +50,8 @@ For users installing Fultimator on macOS, please refer to the full installation 
 
 ## Community & Support
 
-- **Discord (Development & Feedback)**: [Fultimator Server](https://discord.gg/9yYc6R93Cd) (`#development` channel)
-- **General Discussion**: [Rooster Games Discord](https://discord.gg/G9qGbn2) (`#bot-and-tool-discussion` channel)
+- **Discord (Development & Feedback)**: [Fultimator Server](https://discord.gg/aNEgvHm3Re) (`#development` channel)
+- **General Discussion**: [Rooster Games Discord](https://discord.gg/ZSjM6yFUPx) (`#bot-and-tool-discussion` channel)
 
 ---
 
@@ -59,7 +59,7 @@ For users installing Fultimator on macOS, please refer to the full installation 
 
 Fultimator is available in **English, Italian, German, French, Portuguese (Brasil), Spanish and Polish**.  
 
-Want to help improve translations or add new ones? Join our [Discord Server](https://discord.gg/9yYc6R93Cd) and contribute to the localization effort!  
+Want to help improve translations or add new ones? Join our [Discord Server](https://discord.gg/aNEgvHm3Re) and contribute to the localization effort!  
 
 ---
 
@@ -157,6 +157,6 @@ Special thanks to the following contributors:
 - **Alyx** ([greg-argulla](https://github.com/greg-argulla)) - Extended functionality with localization and adversary compendium.  
 - **spyrella** ([spyrella](https://github.com/spyrella)) - Ongoing system updates and maintenance.  
 - **acinoroc** ([acinoroc](https://github.com/acinoroc)) - Lead developer of the **Character Designer**, **Combat Simulator**, and main developer of the **Desktop Version**.  
-- **The Fultimator Localization Team** – A huge thank you to all the community members from our [Discord Server](https://discord.gg/9yYc6R93Cd) who contribute translations, making the app accessible in multiple languages!  
+- **The Fultimator Localization Team** – A huge thank you to all the community members from our [Discord Server](https://discord.gg/aNEgvHm3Re) who contribute translations, making the app accessible in multiple languages!  
 
 See the full list of contributors [here](https://github.com/fultimator/fultimator-desktop/graphs/contributors).
