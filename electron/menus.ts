@@ -98,7 +98,7 @@ export function createAppMenu(mainWindow: BrowserWindow) {
         },
         {
           label: "Join Discord",
-          click: () => shell.openExternal("https://discord.gg/9yYc6R93Cd"),
+          click: () => shell.openExternal("https://discord.gg/aNEgvHm3Re"),
         },
         {
           label: "Check for Updates",
