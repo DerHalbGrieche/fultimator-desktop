@@ -51,8 +51,10 @@ import PlayerNotes from "../../components/player/playerSheet/PlayerNotes";
 import PlayerCompanion from "../../components/player/playerSheet/PlayerCompanion";
 import { useTranslate } from "../../translation/translate";
 import { styled } from "@mui/system";
-import { BugReport, Save, Info, KeyboardArrowUp, FullscreenTwoTone, FullscreenExitTwoTone } from "@mui/icons-material";
+import { BugReport, Save, Info, KeyboardArrowUp, FullscreenTwoTone, FullscreenExitTwoTone, Download } from "@mui/icons-material";
 import deepEqual from "deep-equal";
+import html2canvas from "html2canvas";
+import useDownload from "../../hooks/useDownload";
 import PlayerRituals from "../../components/player/playerSheet/PlayerRituals";
 import PlayerQuirk from "../../components/player/playerSheet/PlayerQuirk";
 import HelpFeedbackDialog from "../../components/appbar/HelpFeedbackDialog";
@@ -72,6 +74,7 @@ import { getPcs, updatePc } from "../../utility/db";
 import PlayerSymbol from "../../components/player/playerSheet/PlayerSymbol";
 import PlayerDance from "../../components/player/playerSheet/PlayerDance";
 import PlayerCardSheet from "../../components/player/playerSheet/compact/PlayerSheetCompact";
+import { fixVerticalLabels } from "../../utility/screenshotFix";
 
 export default function PlayerEdit() {
   const { t } = useTranslate();
@@ -100,6 +103,8 @@ export default function PlayerEdit() {
   );
 
   const [isBugDialogOpen, setIsBugDialogOpen] = useState(false);
+  const [download, snackbar] = useDownload();
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -109,6 +114,86 @@ export default function PlayerEdit() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (playerTemp) {
+      const images = document.querySelectorAll("img");
+      const promises = [];
+
+      images.forEach((image) => {
+        if (!image.complete) {
+          promises.push(
+            new Promise((resolve) => {
+              image.onload = resolve;
+            })
+          );
+        }
+      });
+
+      Promise.all(promises).then(() => {
+        setImagesLoaded(true);
+      });
+
+      // Clean up
+      return () => {
+        images.forEach((image) => {
+          image.onload = null;
+        });
+      };
+    }
+  }, [playerTemp]);
+
+  const takeScreenshot = async () => {
+    if (!imagesLoaded) return;
+
+    const element = document.getElementById(
+      compactView ? "character-sheet-short" : "character-sheet"
+    );
+
+    if (!element) return;
+
+    // Save original styles
+    const originalWidth = element.style.width;
+    const originalMaxHeight = element.style.maxHeight;
+    const originalOverflow = element.style.overflow;
+
+    // 1400px for full sheet (2 columns), 600px for short sheet (1 column)
+    const captureWidth = compactView ? "600px" : "1400px";
+
+    try {
+      // Temporarily apply capture styles
+      element.style.width = captureWidth;
+      element.style.maxHeight = "none";
+      element.style.overflow = "visible";
+
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scale: 2,
+        backgroundColor: theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff",
+        windowWidth: compactView ? 600 : 1400,
+        onclone: (clonedDoc) => {
+          fixVerticalLabels(element, clonedDoc);
+        }
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // Restore original styles
+      element.style.width = originalWidth;
+      element.style.maxHeight = originalMaxHeight;
+      element.style.overflow = originalOverflow;
+
+      await download(imgData, playerTemp.name + "_sheet.png");
+    } catch (error) {
+      console.error("Error capturing screenshot:", error);
+      // Restore original styles even if there's an error
+      element.style.width = originalWidth;
+      element.style.maxHeight = originalMaxHeight;
+      element.style.overflow = originalOverflow;
+    }
+  };
 
   // Effect to fetch PC data from IndexedDB
   useEffect(() => {
@@ -370,7 +455,18 @@ export default function PlayerEdit() {
         {/* Compact View Toggle - only show when on Player Sheet tab */}
         {openTab === 0 && (
           <Grid container spacing={1} sx={{ mb: 2, paddingX: 1 }}>
-            <Grid item xs={12}>
+            <Grid item xs={isSmallScreen ? 10 : 6}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={takeScreenshot}
+                style={{ width: "100%" }}
+                startIcon={<Download />}
+              >
+                {t("Download Character Sheet")}
+              </Button>
+            </Grid>
+            <Grid item xs={isSmallScreen ? 2 : 6}>
               <Button
                 variant="outlined"
                 color="primary"
@@ -415,11 +511,12 @@ export default function PlayerEdit() {
                   isEditMode={isOwner}
                   isCharacterSheet={true}
                   characterImage={playerTemp.info.imgurl}
+                  id="character-sheet-short"
                 />
               </Grid>
             </Grid>
           ) : (
-            <>
+            <div id="character-sheet">
               <PlayerCard
                 player={playerTemp}
                 setPlayer={setPlayerTemp}
@@ -508,7 +605,7 @@ export default function PlayerEdit() {
                   />
                 </>
               )}
-            </>
+            </div>
           )}
         </TabPanel>
         <TabPanel value={1}>
@@ -670,6 +767,7 @@ export default function PlayerEdit() {
         onSuccess={null}
         webhookUrl={import.meta.env.VITE_DISCORD_REPORT_BUG_WEBHOOK_URL}
       />
+      {snackbar}
     </Layout>
   );
 }
