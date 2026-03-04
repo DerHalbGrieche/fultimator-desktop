@@ -37,6 +37,7 @@ export default function PlayerCardSheet({
     isEditMode,
     isCharacterSheet,
     characterImage,
+    id,
 }) {
     const { t } = useTranslate();
     const theme = useCustomTheme();
@@ -258,8 +259,8 @@ export default function PlayerCardSheet({
     const collapse = true;
     return (
         <>
-            <Card>
-                <div style={{ cursor: "pointer", maxWidth: "566px" }}>
+            <Card id={id} sx={{ maxWidth: "566px", width: "100%", mx: "auto" }}>
+                <div style={{ cursor: "pointer" }}>
                     {(
                         <>
                             <div

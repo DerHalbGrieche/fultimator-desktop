@@ -22,6 +22,7 @@ import { getPc } from "../../utility/db";
 import { useTheme } from "@mui/material/styles";
 import { FullscreenTwoTone, FullscreenExitTwoTone } from '@mui/icons-material';
 import useDownload from "../../hooks/useDownload";
+import { fixVerticalLabels } from "../../utility/screenshotFix";
 
 export default function CharacterSheet() {
   const { t } = useTranslate();
@@ -85,50 +86,45 @@ export default function CharacterSheet() {
     if (!element) return;
 
     // Save original styles
-    const originalStyles = {
-      width: element.style.width,
-      transform: element.style.transform,
-      transformOrigin: element.style.transformOrigin,
-      backgroundColor: element.style.backgroundColor
-    };
+    const originalWidth = element.style.width;
+    const originalMaxHeight = element.style.maxHeight;
+    const originalOverflow = element.style.overflow;
 
-    // Calculate the scale factor (2000px for full sheet, 1000px for short)
-    const targetWidth = fullCharacterSheet ? 2000 : 266;
-    const currentWidth = element.offsetWidth;
-    const scale = targetWidth / currentWidth;
+    // 1400px for full sheet (2 columns), 600px for short sheet (1 column)
+    const captureWidth = fullCharacterSheet ? "1400px" : "600px";
 
     try {
-      // Apply scaling transformation
-      element.style.transform = `scale(${scale})`;
-      element.style.transformOrigin = 'top left';
-      element.style.backgroundColor =
-        theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff";
+      // Temporarily apply capture styles
+      element.style.width = captureWidth;
+      element.style.maxHeight = "none";
+      element.style.overflow = "visible";
 
       const canvas = await html2canvas(element, {
         useCORS: true,
         allowTaint: true,
-        logging: true,
-        width: targetWidth,
-        height: Math.ceil(element.offsetHeight * scale),
-        scale: 1, // We're handling scaling manually
+        logging: false,
+        scale: 2,
+        backgroundColor: theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff",
+        windowWidth: fullCharacterSheet ? 1400 : 600,
+        onclone: (clonedDoc) => {
+          fixVerticalLabels(element, clonedDoc);
+        }
       });
 
       const imgData = canvas.toDataURL("image/png");
 
       // Restore original styles
-      element.style.width = originalStyles.width;
-      element.style.transform = originalStyles.transform;
-      element.style.transformOrigin = originalStyles.transformOrigin;
-      element.style.backgroundColor = originalStyles.backgroundColor;
+      element.style.width = originalWidth;
+      element.style.maxHeight = originalMaxHeight;
+      element.style.overflow = originalOverflow;
 
       await download(imgData, player.name + "_sheet.png");
     } catch (error) {
       console.error("Error capturing screenshot:", error);
       // Restore original styles even if there's an error
-      element.style.width = originalStyles.width;
-      element.style.transform = originalStyles.transform;
-      element.style.transformOrigin = originalStyles.transformOrigin;
-      element.style.backgroundColor = originalStyles.backgroundColor;
+      element.style.width = originalWidth;
+      element.style.maxHeight = originalMaxHeight;
+      element.style.overflow = originalOverflow;
     }
   };
 
@@ -192,7 +188,12 @@ export default function CharacterSheet() {
                 <PlayerTraits player={player} isCharacterSheet={true} />
                 <PlayerBonds player={player} isCharacterSheet={true} />
                 <PlayerRituals player={player} isCharacterSheet={true} />
-                <PlayerEquipment player={player} isCharacterSheet={true} />
+                <PlayerEquipment 
+                  player={player} 
+                  setPlayer={setPlayer}
+                  isEditMode={true}
+                  isCharacterSheet={true} 
+                />
                 <PlayerNotes player={player} isCharacterSheet={true} />
               </Stack>
             </Grid>
@@ -241,13 +242,15 @@ export default function CharacterSheet() {
           container
           sx={{ padding: 1 }}
           justifyContent={"center"}
-          id="character-sheet-short"
         >
           <Grid container item xs={12}>
             <PlayerCardSheet
               player={player}
+              setPlayer={setPlayer}
+              isEditMode={true}
               isCharacterSheet={true}
               characterImage={player.info.imgurl}
+              id="character-sheet-short"
             />
           </Grid>
         </Grid>

@@ -14,7 +14,7 @@ import { useTranslate } from "../../../../translation/translate";
 import types from "../../../../libs/types";
 import attributes from "../../../../libs/attributes";
 import { useCustomTheme } from "../../../../hooks/useCustomTheme";
-import { Casino, RadioButtonUnchecked, Error } from "@mui/icons-material";
+import { Casino, RadioButtonUnchecked, Error, SwapHoriz } from "@mui/icons-material";
 
 /**
  * Utility function to calculate custom weapon damage and precision stats
@@ -152,7 +152,15 @@ export default function PlayerEquipment({
     : [];
 
   // Function to format custom weapons for display
-  const formatCustomWeapon = (customWeapon, isSecondaryForm = false) => {
+  const formatCustomWeapon = (customWeapon, forceSecondaryForm = null) => {
+    const isTransforming = customWeapon.customizations?.some(
+      (c) => c.name === "weapon_customization_transforming"
+    );
+    
+    const isSecondaryForm = forceSecondaryForm !== null 
+      ? forceSecondaryForm 
+      : customWeapon.activeForm === "secondary";
+
     const weaponName = isSecondaryForm
       ? customWeapon.secondWeaponName || `${customWeapon.name} (Transforming)`
       : customWeapon.name;
@@ -187,26 +195,16 @@ export default function PlayerEquipment({
       ranged: (isSecondaryForm ? customWeapon.secondSelectedRange : customWeapon.range) === "weapon_range_ranged",
       martial: isMartial,
       quality: quality || "",
-      isEquipped: true,
+      isEquipped: customWeapon.isEquipped,
       isCustomWeapon: true,
+      isTransforming: isTransforming,
+      isSecondaryForm: isSecondaryForm,
       originalData: customWeapon
     };
   };
 
   // Format equipped custom weapons for display
-  const formattedCustomWeapons = [];
-  equippedCustomWeapons.forEach((customWeapon) => {
-    // Add primary form
-    formattedCustomWeapons.push(formatCustomWeapon(customWeapon, false));
-
-    // Add secondary form if it's a transforming weapon
-    const hasTransforming = customWeapon.customizations && customWeapon.customizations.some(
-      (c) => c.name === "weapon_customization_transforming"
-    );
-    if (hasTransforming && customWeapon.secondWeaponName) {
-      formattedCustomWeapons.push(formatCustomWeapon(customWeapon, true));
-    }
-  });
+  const formattedCustomWeapons = equippedCustomWeapons.map(cw => formatCustomWeapon(cw));
 
   const equippedArmor = player.armor
     ? player.armor.filter((armor) => armor.isEquipped)
@@ -221,7 +219,7 @@ export default function PlayerEquipment({
     : [];
 
   // Combine regular weapons and custom weapons
-  const allEquippedWeapons = [...equippedWeapons, ...formattedCustomWeapons];
+  const allEquippedWeapons = [...equippedWeapons];
 
   // Add Twin Shields to equipped weapons if the player has Dual Shieldbearer and 2 shields equipped
   if (hasDualShieldBearer && equippedShields.length >= 2) {
@@ -349,7 +347,7 @@ export default function PlayerEquipment({
       handleEquipArmor(item);
     } else if (item.category === 'Shield') {
       handleEquipShield(item);
-    } else if (item.category === 'Accessory') {
+    } else if (item.category === 'Accessory' || (!item.category && player.accessories.some(a => a === item))) {
       handleEquipAccessory(item);
     }
   };
@@ -360,10 +358,11 @@ export default function PlayerEquipment({
       const updatedCustomWeapons = [...(prevPlayer.customWeapons || [])];
       const weaponIndex = updatedCustomWeapons.findIndex(w => w === customWeapon);
       if (weaponIndex !== -1) {
-        updatedCustomWeapons[weaponIndex] = { ...customWeapon, isEquipped: !customWeapon.isEquipped };
+        const isEquipping = !customWeapon.isEquipped;
+        updatedCustomWeapons[weaponIndex] = { ...customWeapon, isEquipped: isEquipping };
 
-        // If unequipping, also unequip regular weapons and shields
-        if (!customWeapon.isEquipped) {
+        // If equipping, unequip regular weapons and shields
+        if (isEquipping) {
           const updatedWeapons = (prevPlayer.weapons || []).map(weapon => ({
             ...weapon,
             isEquipped: false
@@ -372,6 +371,13 @@ export default function PlayerEquipment({
             ...shield,
             isEquipped: false
           }));
+          
+          // Also unequip other custom weapons
+          updatedCustomWeapons.forEach((cw, i) => {
+            if (i !== weaponIndex) {
+              cw.isEquipped = false;
+            }
+          });
 
           return {
             ...prevPlayer,
@@ -381,6 +387,23 @@ export default function PlayerEquipment({
           };
         }
 
+        return { ...prevPlayer, customWeapons: updatedCustomWeapons };
+      }
+      return prevPlayer;
+    });
+  };
+
+  const handleSwapForm = (item) => {
+    if (!setPlayer || !isEditMode) return;
+    
+    const customWeapon = item.originalData;
+    setPlayer(prevPlayer => {
+      const updatedCustomWeapons = [...(prevPlayer.customWeapons || [])];
+      const weaponIndex = updatedCustomWeapons.findIndex(w => w === customWeapon);
+      if (weaponIndex !== -1) {
+        const cw = updatedCustomWeapons[weaponIndex];
+        const newForm = cw.activeForm === "secondary" ? "primary" : "secondary";
+        updatedCustomWeapons[weaponIndex] = { ...cw, activeForm: newForm };
         return { ...prevPlayer, customWeapons: updatedCustomWeapons };
       }
       return prevPlayer;
@@ -735,7 +758,7 @@ export default function PlayerEquipment({
                 <StyledTableCellHeader />
                 <StyledTableCellHeader>
                   <Typography variant="h4" textAlign="left">
-                    {t("Weapon")}
+                    {t("Custom Weapon")}
                   </Typography>
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
@@ -754,13 +777,74 @@ export default function PlayerEquipment({
           </Table>
         )}
         {allEquippedWeapons.length > 0 && (
-          <CollapsibleWeapon weapons={allEquippedWeapons} handleEquipment={handleEquipment} handleDiceRoll={handleDiceRoll} isMainTab={isMainTab} searchQuery={searchQuery} />
+          <CollapsibleWeapon 
+            weapons={allEquippedWeapons} 
+            handleEquipment={handleEquipment} 
+            handleDiceRoll={handleDiceRoll} 
+            isMainTab={isMainTab} 
+            searchQuery={searchQuery} 
+          />
+        )}
+        {formattedCustomWeapons.length > 0 && (
+          <CollapsibleWeapon 
+            weapons={formattedCustomWeapons} 
+            handleEquipment={handleEquipment} 
+            handleDiceRoll={handleDiceRoll} 
+            handleSwapForm={handleSwapForm}
+            isMainTab={isMainTab} 
+            searchQuery={searchQuery} 
+          />
+        )}
+        {!isMainTab && (
+          <AllWeapon
+            weapons={[
+              ...((player.customWeapons?.filter(w => !w.isEquipped) || []).map(cw => formatCustomWeapon(cw)))
+            ]}
+            handleEquipment={handleEquipment}
+            handleDiceRoll={handleDiceRoll}
+            handleSwapForm={handleSwapForm}
+            checkIfEquippable={checkIfEquippable}
+            isMainTab={isMainTab}
+            searchQuery={searchQuery}
+          />
+        )}
+        {!isMainTab && (
+          <Table>
+            <TableHead>
+              <TableRow
+                sx={{
+                  p: 0.5,
+                  background: `${theme.primary}`,
+                  "& .MuiTypography-root": {
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    textTransform: "uppercase",
+                  },
+                }}>
+                <StyledTableCellHeader />
+                <StyledTableCellHeader>
+                  <Typography variant="h4" textAlign="left">
+                    {t("Weapon")}
+                  </Typography>
+                </StyledTableCellHeader>
+                <StyledTableCellHeader>
+                  <Typography variant="h4" textAlign="center">
+                    {t("Accuracy")}
+                  </Typography>
+                </StyledTableCellHeader>
+                <StyledTableCellHeader>
+                  <Typography variant="h4" textAlign="center">
+                    {t("Damage")}
+                  </Typography>
+                </StyledTableCellHeader>
+                <StyledTableCellHeader />
+              </TableRow>
+            </TableHead>
+          </Table>
         )}
         {!isMainTab && (
           <AllWeapon
             weapons={[
               ...(player.weapons?.filter(w => !w.isEquipped) || []),
-              ...((player.customWeapons?.filter(w => !w.isEquipped) || []).map(cw => formatCustomWeapon(cw, false)))
             ]}
             handleEquipment={handleEquipment}
             handleDiceRoll={handleDiceRoll}
@@ -992,7 +1076,7 @@ function highlightMatch(text, query) {
   );
 }
 
-function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, isMainTab, searchQuery }) {
+function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, handleSwapForm, isMainTab, searchQuery }) {
   const [open, setOpen] = useState({});
   const { t } = useTranslate();
   const theme = useCustomTheme();
@@ -1091,6 +1175,13 @@ function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, isMainTab
                       <MeleeIcon />
                     </IconButton>
                   </Tooltip>
+                  {weapon.isTransforming && (
+                    <Tooltip title={t("weapon_customization_swap_form")} arrow>
+                      <IconButton onClick={() => handleSwapForm(weapon)} size="small">
+                        <SwapHoriz />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <Tooltip title={t("Roll")} arrow>
                     <IconButton onClick={() => handleDiceRoll(weapon)} aria-label="expand row" size="small">
                       <Casino />
@@ -1112,6 +1203,7 @@ function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, isMainTab
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 0.5,
+                                flexWrap: 'wrap'
                               }}>
                                 {`${weapon.cost}z`}
                                 <Diamond color={theme.primary} sx={{ mx: 1 }} />
@@ -1123,6 +1215,16 @@ function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, isMainTab
                                 {weapon.melee && t("Melee")}
                                 {weapon.ranged && t("Ranged")}
                                 <Diamond color={theme.primary} sx={{ mx: 1 }} />
+                                {weapon.isCustomWeapon && (
+                                  <>
+                                    {(weapon.isSecondaryForm ? weapon.originalData.secondCurrentCustomizations : weapon.originalData.customizations || []).map((c, i) => (
+                                      <React.Fragment key={i}>
+                                        {t(c.name)}
+                                        <Diamond color={theme.primary} sx={{ mx: 1 }} />
+                                      </React.Fragment>
+                                    ))}
+                                  </>
+                                )}
                                 {weapon.quality && (
                                   <StyledMarkdown
                                     allowedElements={["strong"]}
@@ -1457,7 +1559,7 @@ function CollapsibleAccessory({ accessorys, handleEquipment, handleDiceRoll, isM
   );
 }
 
-function AllWeapon({ weapons, handleEquipment, handleDiceRoll, checkIfEquippable, isMainTab, searchQuery }) {
+function AllWeapon({ weapons, handleEquipment, handleDiceRoll, handleSwapForm, checkIfEquippable, isMainTab, searchQuery }) {
   const [open, setOpen] = useState({});
   const { t } = useTranslate();
   const theme = useCustomTheme();
@@ -1563,6 +1665,13 @@ function AllWeapon({ weapons, handleEquipment, handleDiceRoll, checkIfEquippable
                       </IconButton>
                     </Tooltip>
                   )}
+                  {weapon.isTransforming && (
+                    <Tooltip title={t("weapon_customization_swap_form")} arrow>
+                      <IconButton onClick={() => handleSwapForm(weapon)} size="small">
+                        <SwapHoriz />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <Tooltip title={t("Roll")} arrow>
                     <IconButton onClick={() => handleDiceRoll(weapon)} aria-label="expand row" size="small">
                       <Casino />
@@ -1584,6 +1693,7 @@ function AllWeapon({ weapons, handleEquipment, handleDiceRoll, checkIfEquippable
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 0.5,
+                                flexWrap: 'wrap'
                               }}>
                                 {`${weapon.cost}z`}
                                 <Diamond color={theme.primary} sx={{ mx: 1 }} />
@@ -1595,6 +1705,16 @@ function AllWeapon({ weapons, handleEquipment, handleDiceRoll, checkIfEquippable
                                 {weapon.melee && t("Melee")}
                                 {weapon.ranged && t("Ranged")}
                                 <Diamond color={theme.primary} sx={{ mx: 1 }} />
+                                {weapon.isCustomWeapon && (
+                                  <>
+                                    {(weapon.isSecondaryForm ? weapon.originalData.secondCurrentCustomizations : weapon.originalData.customizations || []).map((c, i) => (
+                                      <React.Fragment key={i}>
+                                        {t(c.name)}
+                                        <Diamond color={theme.primary} sx={{ mx: 1 }} />
+                                      </React.Fragment>
+                                    ))}
+                                  </>
+                                )}
                                 {weapon.quality && (
                                   <StyledMarkdown
                                     allowedElements={["strong"]}
