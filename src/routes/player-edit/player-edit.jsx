@@ -60,6 +60,12 @@ import PlayerQuirk from "../../components/player/playerSheet/PlayerQuirk";
 import HelpFeedbackDialog from "../../components/appbar/HelpFeedbackDialog";
 import PlayerGadgets from "../../components/player/playerSheet/PlayerGadgets";
 import PlayerMagichant from "../../components/player/playerSheet/PlayerMagichant";
+import PlayerGift from "../../components/player/playerSheet/PlayerGift";
+import PlayerTherioforms from "../../components/player/playerSheet/PlayerTherioforms";
+import PlayerVehicle from "../../components/player/playerSheet/PlayerVehicle";
+import PlayerInvoker from "../../components/player/playerSheet/PlayerInvoker";
+import PlayerGourmet from "../../components/player/playerSheet/PlayerGourmet";
+import PlayerDeck from "../../components/player/playerSheet/PlayerDeck.jsx";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import {
   CharacterSheetIcon,
@@ -72,6 +78,7 @@ import {
 
 import { getPcs, updatePc } from "../../utility/db";
 import PlayerSymbol from "../../components/player/playerSheet/PlayerSymbol";
+import PlayerMagiseed from "../../components/player/playerSheet/PlayerMagiseed";
 import PlayerDance from "../../components/player/playerSheet/PlayerDance";
 import PlayerCardSheet from "../../components/player/playerSheet/compact/PlayerSheetCompact";
 import { fixVerticalLabels } from "../../utility/screenshotFix";
@@ -568,6 +575,11 @@ export default function PlayerEdit() {
                     setPlayer={setPlayerTemp}
                     isEditMode={isOwner}
                   />
+                  <PlayerVehicle
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
                   <PlayerSkills
                     player={playerTemp}
                     setPlayer={setPlayerTemp}
@@ -593,12 +605,40 @@ export default function PlayerEdit() {
                     setPlayer={setPlayerTemp}
                     isEditMode={isOwner}
                   />
+                  <PlayerMagiseed
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
                   <PlayerSymbol
                     player={playerTemp}
                     setPlayer={setPlayerTemp}
                     isEditMode={isOwner}
                   />
                   <PlayerDance
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerGift
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerTherioforms
+                    player={playerTemp}
+                  />
+                  <PlayerGourmet
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerInvoker
+                    player={playerTemp}
+                    setPlayer={setPlayerTemp}
+                    isEditMode={isOwner}
+                  />
+                  <PlayerDeck
                     player={playerTemp}
                     setPlayer={setPlayerTemp}
                     isEditMode={isOwner}
