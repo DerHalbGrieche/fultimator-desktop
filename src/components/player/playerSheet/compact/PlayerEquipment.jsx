@@ -758,7 +758,7 @@ export default function PlayerEquipment({
                 <StyledTableCellHeader />
                 <StyledTableCellHeader>
                   <Typography variant="h4" textAlign="left">
-                    {t("Custom Weapon")}
+                    {t("Weapon")}
                   </Typography>
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
@@ -785,24 +785,13 @@ export default function PlayerEquipment({
             searchQuery={searchQuery} 
           />
         )}
-        {formattedCustomWeapons.length > 0 && (
-          <CollapsibleWeapon 
-            weapons={formattedCustomWeapons} 
-            handleEquipment={handleEquipment} 
-            handleDiceRoll={handleDiceRoll} 
-            handleSwapForm={handleSwapForm}
-            isMainTab={isMainTab} 
-            searchQuery={searchQuery} 
-          />
-        )}
         {!isMainTab && (
           <AllWeapon
             weapons={[
-              ...((player.customWeapons?.filter(w => !w.isEquipped) || []).map(cw => formatCustomWeapon(cw)))
+              ...(player.weapons?.filter(w => !w.isEquipped) || []),
             ]}
             handleEquipment={handleEquipment}
             handleDiceRoll={handleDiceRoll}
-            handleSwapForm={handleSwapForm}
             checkIfEquippable={checkIfEquippable}
             isMainTab={isMainTab}
             searchQuery={searchQuery}
@@ -823,7 +812,7 @@ export default function PlayerEquipment({
                 <StyledTableCellHeader />
                 <StyledTableCellHeader>
                   <Typography variant="h4" textAlign="left">
-                    {t("Weapon")}
+                    {t("Custom Weapon")}
                   </Typography>
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
@@ -841,13 +830,24 @@ export default function PlayerEquipment({
             </TableHead>
           </Table>
         )}
+        {formattedCustomWeapons.length > 0 && (
+          <CollapsibleWeapon 
+            weapons={formattedCustomWeapons} 
+            handleEquipment={handleEquipment} 
+            handleDiceRoll={handleDiceRoll} 
+            handleSwapForm={handleSwapForm}
+            isMainTab={isMainTab} 
+            searchQuery={searchQuery} 
+          />
+        )}
         {!isMainTab && (
           <AllWeapon
             weapons={[
-              ...(player.weapons?.filter(w => !w.isEquipped) || []),
+              ...((player.customWeapons?.filter(w => !w.isEquipped) || []).map(cw => formatCustomWeapon(cw)))
             ]}
             handleEquipment={handleEquipment}
             handleDiceRoll={handleDiceRoll}
+            handleSwapForm={handleSwapForm}
             checkIfEquippable={checkIfEquippable}
             isMainTab={isMainTab}
             searchQuery={searchQuery}
@@ -1250,7 +1250,7 @@ function CollapsibleWeapon({ weapons, handleEquipment, handleDiceRoll, handleSwa
   );
 }
 
-function CollapsibleArmor({ armors, handleEquipment, handleDiceRoll, isMainTab, searchQuery }) {
+function CollapsibleArmor({ armors, handleEquipment, isMainTab, searchQuery }) {
   const [open, setOpen] = useState({});
   const { t } = useTranslate();
   const theme = useCustomTheme();
@@ -1363,17 +1363,6 @@ function CollapsibleArmor({ armors, handleEquipment, handleDiceRoll, isMainTab, 
                       {armor.category === "Shield" && <ShieldIcon />}
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title={t("Roll")} arrow>
-                    <IconButton
-                      onClick={() => {
-                        handleDiceRoll(armor)
-                      }}
-                      aria-label="roll"
-                      size="small"
-                    >
-                      <Casino />
-                    </IconButton>
-                  </Tooltip>
                 </StyledTableCell>
               </TableRow>
               <TableRow>
@@ -1430,7 +1419,7 @@ function CollapsibleArmor({ armors, handleEquipment, handleDiceRoll, isMainTab, 
   );
 }
 
-function CollapsibleAccessory({ accessorys, handleEquipment, handleDiceRoll, isMainTab, searchQuery }) {
+function CollapsibleAccessory({ accessorys, handleEquipment, isMainTab, searchQuery }) {
   const [open, setOpen] = useState({});
   const { t } = useTranslate();
   const theme = useCustomTheme();
@@ -1510,11 +1499,6 @@ function CollapsibleAccessory({ accessorys, handleEquipment, handleDiceRoll, isM
                   <Tooltip title={t("Unequip")} arrow>
                     <IconButton onClick={() => handleEquipment(accessory)} aria-label="expand row" size="small">
                       <AccessoryIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={t("Roll")} arrow>
-                    <IconButton onClick={() => handleDiceRoll(accessory)} aria-label="expand row" size="small">
-                      <Casino />
                     </IconButton>
                   </Tooltip>
                 </StyledTableCell>
@@ -1740,7 +1724,7 @@ function AllWeapon({ weapons, handleEquipment, handleDiceRoll, handleSwapForm, c
   );
 }
 
-function AllArmor({ armors, handleEquipment, handleDiceRoll, checkIfEquippable, isMainTab, searchQuery }) {
+function AllArmor({ armors, handleEquipment, checkIfEquippable, isMainTab, searchQuery }) {
   const [open, setOpen] = useState({});
   const { t } = useTranslate();
   const theme = useCustomTheme();
@@ -1855,7 +1839,7 @@ function AllArmor({ armors, handleEquipment, handleDiceRoll, checkIfEquippable, 
                         onClick={() => {
                           handleEquipment(armor);
                         }}
-                        aria-label="roll"
+                        aria-label="equip"
                         size="small"
                       >
                         <RadioButtonUnchecked />
@@ -1868,17 +1852,6 @@ function AllArmor({ armors, handleEquipment, handleDiceRoll, checkIfEquippable, 
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title={t("Roll")} arrow>
-                    <IconButton
-                      onClick={() => {
-                        handleDiceRoll(armor)
-                      }}
-                      aria-label="roll"
-                      size="small"
-                    >
-                      <Casino />
-                    </IconButton>
-                  </Tooltip>
                 </StyledTableCell>
               </TableRow>
               <TableRow>
@@ -2015,11 +1988,6 @@ function AllAccessory({ accessorys, handleEquipment, handleDiceRoll, isMainTab, 
                   <Tooltip title={t("Equip")} arrow>
                     <IconButton onClick={() => handleEquipment(accessory)} aria-label="expand row" size="small">
                       <RadioButtonUnchecked />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={t("Roll")} arrow>
-                    <IconButton onClick={() => handleDiceRoll(accessory)} aria-label="expand row" size="small">
-                      <Casino />
                     </IconButton>
                   </Tooltip>
                 </StyledTableCell>

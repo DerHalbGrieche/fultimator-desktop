@@ -1,6 +1,5 @@
 import {
   Typography,
-  TableContainer,
   Table,
   TableBody,
   TableRow,
@@ -41,124 +40,124 @@ const StyledMarkdown = ({ children, ...props }) => {
 export default function SpellArcanist({ arcana, rework }) {
   const { t } = useTranslate();
   const theme = useCustomTheme();
+  const isDarkMode = theme.mode === "dark";
+  const gradientColor = isDarkMode ? '#1f1f1f' : '#fff';
 
   return (
-    <TableContainer sx={{ marginBottom: 1 }}>
-      <Table size="small">
-        <TableBody>
-          {/* Header Row */}
-          <TableRow sx={{ backgroundColor: theme.primary }}>
-            <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.85rem" }}>
-              {arcana.name}
-            </StyledTableCell>
-          </TableRow>
-          
-          {/* Description Row */}
-          <TableRow sx={{ background: `linear-gradient(to right, ${theme.ternary}, #fff)` }}>
+    <Table size="small" sx={{ border: `1px solid ${theme.primary}40` }}>
+      <TableBody>
+        {/* Header Row */}
+        <TableRow sx={{ backgroundColor: theme.primary }}>
+          <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.85rem" }}>
+            {arcana.name}
+          </StyledTableCell>
+        </TableRow>
+        
+        {/* Description Row */}
+          <TableRow sx={{ backgroundImage: `linear-gradient(to right, ${theme.ternary}, ${gradientColor})` }}>
+          <StyledTableCell>
+            <Typography fontStyle="italic" sx={{ fontSize: "0.8rem" }}>
+              {!arcana.description ? (
+                t("No Description")
+              ) : (
+                <ReactMarkdown
+                  allowedElements={["strong", "em"]}
+                  unwrapDisallowed={true}
+                  components={{
+                    p: (props) => <span style={{ fontSize: "0.8rem" }} {...props} />,
+                  }}
+                >
+                  {arcana.description}
+                </ReactMarkdown>
+              )}
+            </Typography>
+          </StyledTableCell>
+        </TableRow>
+
+        {/* Domain Row */}
+        {arcana.domain && (
+          <TableRow>
             <StyledTableCell>
-              <Typography fontStyle="italic" sx={{ fontSize: "0.8rem" }}>
-                {!arcana.description ? (
-                  t("No Description")
-                ) : (
-                  <ReactMarkdown
-                    allowedElements={["strong", "em"]}
-                    unwrapDisallowed={true}
-                    components={{
-                      p: (props) => <span style={{ fontSize: "0.8rem" }} {...props} />,
-                    }}
-                  >
-                    {arcana.description}
-                  </ReactMarkdown>
-                )}
+              <Typography sx={{ fontSize: "0.8rem" }}>
+                <strong>{t("Domains: ")}</strong>
+                <ReactMarkdown
+                  allowedElements={["strong", "em"]}
+                  unwrapDisallowed={true}
+                  components={{
+                    p: (props) => <span style={{ fontSize: "0.8rem" }} {...props} />,
+                  }}
+                >
+                  {arcana.domain}
+                </ReactMarkdown>
               </Typography>
             </StyledTableCell>
           </TableRow>
+        )}
 
-          {/* Domain Row */}
-          {arcana.domain && (
+        {/* Merge Row */}
+        <TableRow sx={{ backgroundColor: theme.secondary }}>
+          <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
+            {t("MERGE")}: {arcana.merge}
+          </StyledTableCell>
+        </TableRow>
+        <TableRow>
+          <StyledTableCell>
+            <Typography sx={{ fontSize: "0.75rem" }}>
+              {!arcana.mergeDesc ? (
+                t("No Merge Benefit")
+              ) : (
+                <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
+                  {arcana.mergeDesc}
+                </StyledMarkdown>
+              )}
+            </Typography>
+          </StyledTableCell>
+        </TableRow>
+
+        {/* Pulse Row (if rework) */}
+        {rework && (
+          <>
+            <TableRow sx={{ backgroundColor: theme.secondary }}>
+              <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
+                {t("PULSE")}: {arcana.pulse}
+              </StyledTableCell>
+            </TableRow>
             <TableRow>
               <StyledTableCell>
-                <Typography sx={{ fontSize: "0.8rem" }}>
-                  <strong>{t("Domains: ")}</strong>
-                  <ReactMarkdown
-                    allowedElements={["strong", "em"]}
-                    unwrapDisallowed={true}
-                    components={{
-                      p: (props) => <span style={{ fontSize: "0.8rem" }} {...props} />,
-                    }}
-                  >
-                    {arcana.domain}
-                  </ReactMarkdown>
+                <Typography sx={{ fontSize: "0.75rem" }}>
+                  {!arcana.pulseDesc ? (
+                    t("No Pulse Benefit")
+                  ) : (
+                    <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
+                      {arcana.pulseDesc}
+                    </StyledMarkdown>
+                  )}
                 </Typography>
               </StyledTableCell>
             </TableRow>
-          )}
+          </>
+        )}
 
-          {/* Merge Row */}
-          <TableRow sx={{ backgroundColor: theme.secondary }}>
-            <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
-              {t("MERGE")}: {arcana.merge}
-            </StyledTableCell>
-          </TableRow>
-          <TableRow>
-            <StyledTableCell>
-              <Typography sx={{ fontSize: "0.75rem" }}>
-                {!arcana.mergeDesc ? (
-                  t("No Merge Benefit")
-                ) : (
-                  <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
-                    {arcana.mergeDesc}
-                  </StyledMarkdown>
-                )}
-              </Typography>
-            </StyledTableCell>
-          </TableRow>
-
-          {/* Pulse Row (if rework) */}
-          {rework && (
-            <>
-              <TableRow sx={{ backgroundColor: theme.secondary }}>
-                <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
-                  {t("PULSE")}: {arcana.pulse}
-                </StyledTableCell>
-              </TableRow>
-              <TableRow>
-                <StyledTableCell>
-                  <Typography sx={{ fontSize: "0.75rem" }}>
-                    {!arcana.pulseDesc ? (
-                      t("No Pulse Benefit")
-                    ) : (
-                      <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
-                        {arcana.pulseDesc}
-                      </StyledMarkdown>
-                    )}
-                  </Typography>
-                </StyledTableCell>
-              </TableRow>
-            </>
-          )}
-
-          {/* Dismiss Row */}
-          <TableRow sx={{ backgroundColor: theme.secondary }}>
-            <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
-              {t("DISMISS")}: {arcana.dismiss}
-            </StyledTableCell>
-          </TableRow>
-          <TableRow>
-            <StyledTableCell>
-              <Typography sx={{ fontSize: "0.75rem" }}>
-                {!arcana.dismissDesc ? (
-                  t("No Dismiss Benefit")
-                ) : (
-                  <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
-                    {arcana.dismissDesc}
-                  </StyledMarkdown>
-                )}
-              </Typography>
-            </StyledTableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
+        {/* Dismiss Row */}
+        <TableRow sx={{ backgroundColor: theme.secondary }}>
+          <StyledTableCell sx={{ color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
+            {t("DISMISS")}: {arcana.dismiss}
+          </StyledTableCell>
+        </TableRow>
+        <TableRow>
+          <StyledTableCell>
+            <Typography sx={{ fontSize: "0.75rem" }}>
+              {!arcana.dismissDesc ? (
+                t("No Dismiss Benefit")
+              ) : (
+                <StyledMarkdown allowedElements={["strong", "em"]} unwrapDisallowed>
+                  {arcana.dismissDesc}
+                </StyledMarkdown>
+              )}
+            </Typography>
+          </StyledTableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
   );
 }
